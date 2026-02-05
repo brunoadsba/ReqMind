@@ -1,0 +1,139 @@
+"""MemoryManager - Gerenciador de memoria inteligente
+
+Integra FactStore com extração automática de fatos das conversas.
+"""
+
+import json
+import re
+from pathlib import Path
+from typing import List, Dict, Optional, Tuple
+from datetime import datetime
+from workspace.memory.fact_store import FactStore, Fact
+
+
+class MemoryManager:
+    """Gerenciador inteligente de memoria do agente"""
+    
+    def __init__(self, memory_dir: Path = None):
+        if memory_dir is None:
+            from config import config
+            memory_dir = config.WORKSPACE_DIR / "memory"
+        
+        self.memory_dir = Path(memory_dir)
+        self.memory_dir.mkdir(parents=True, exist_ok=True)
+        
+        # FactStore
+        self.fact_store = FactStore(self.memory_dir)
+        
+        # Padrões para extração de fatos
+        self.fact_patterns = [
+            (r"(?:projeto|diretório|caminho) [ée]stá? em ([/\w~.-]+)", "path"),
+            (r"(?:versão|versao) [ée] ([\d.]+)", "version"),
+            (r"(?:usuário|login) [ée] (\w+)", "user"),
+            (r"(?:token|senha|chave) [ée] (\S+)", "secret"),
+            (r"(?:porta|port) [ée] (\d+)", "port"),
+            (r"ip [ée] (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", "ip"),
+        ]
+    
+    def add_fact(self, content: str, source: str = None, tags: List[str] = None, 
+                 auto_extract: bool = True) -> str:
+        """Adiciona um fato, opcionalmente extraindo metadados"""
+        
+        # Extrai tags automaticamente se necessario
+        if auto_extract and not tags:
+            tags = self._extract_tags(content)
+        
+        # Adiciona ao FactStore
+        fact_id = self.fact_store.add_fact(content, source, tags)
+        
+        return fact_id
+    
+    def _extract_tags(self, content: str) -> List[str]:
+        """Extrai tags automaticamente do conteudo"""
+        tags = []
+        content_lower = content.lower()
+        
+        # Palavras-chave
+        keywords = {
+            "projeto": ["projeto", "project", "app", "sistema"],
+            "config": ["configuracao", "config", "settings", ".env"],
+            "caminho": ["caminho", "path", "diretorio", "pasta", "folder"],
+            "seguranca": ["senha", "password", "token", "key", "secret"],
+            "tech": ["python", "javascript", "docker", "api", "llm"],
+            "infra": ["servidor", "server", "porta", "host", "deploy"],
+        }
+        
+        for tag, words in keywords.items():
+            if any(word in content_lower for word in words):
+                tags.append(tag)
+        
+        return tags or ["general"]
+    
+    def extract_facts_from_message(self, message: str, context: str = None) -> List[str]:
+        """Extrai fatos de uma mensagem automaticamente"""
+        extracted_facts = []
+        
+        for pattern, tag in self.fact_patterns:
+            matches = re.finditer(pattern, message, re.IGNORECASE)
+            for match in matches:
+                fact_content = match.group(0)
+                if len(fact_content) > 10:  # Evita fatos muito curtos
+                    fact_id = self.add_fact(
+                        content=fact_content,
+                        source=context or "auto_extract",
+                        tags=[tag, "auto"]
+                    )
+                    extracted_facts.append(fact_id)
+        
+        return extracted_facts
+    
+    def search(self, query: str, top_k: int = 5) -> List[Tuple[str, float]]:
+        """Busca fatos relevantes"""
+        results = self.fact_store.search_facts(query, top_k=top_k)
+        return [(fact.content, score) for fact, score in results]
+    
+    def get_relevant_memory(self, user_message: str, max_facts: int = 3) -> str:
+        """Retorna fatos relevantes como contexto para o agente"""
+        results = self.search(user_message, top_k=max_facts)
+        
+        if not results:
+            return ""
+        
+        memory_context = "Fatos relevantes:\n"
+        for content, score in results:
+            if score > 0.1:  # Threshold de relevancia
+                memory_context += f"- {content}\n"
+        
+        return memory_context if len(memory_context) > 20 else ""
+    
+    def remember_interaction(self, user_message: str, assistant_response: str):
+        """Memoriza uma interação completa"""
+        # Extrai fatos da mensagem do usuario
+        self.extract_facts_from_message(user_message, "user")
+        
+        # Extrai fatos da resposta (se contiver informações uteis)
+        if any(keyword in assistant_response.lower() 
+               for keyword in ["diretorio", "caminho", "projeto", "configuracao"]):
+            self.extract_facts_from_message(assistant_response, "assistant")
+    
+    def get_stats(self) -> Dict:
+        """Retorna estatísticas da memória"""
+        return {
+            "facts": self.fact_store.get_stats(),
+            "total_stored": len(self.fact_store.facts)
+        }
+
+
+# Singleton global
+_memory_manager: Optional[MemoryManager] = None
+
+
+def get_memory_manager() -> MemoryManager:
+    """Retorna instância singleton do MemoryManager"""
+    global _memory_manager
+    if _memory_manager is None:
+        _memory_manager = MemoryManager()
+    return _memory_manager
+
+
+__all__ = ["MemoryManager", "get_memory_manager"]

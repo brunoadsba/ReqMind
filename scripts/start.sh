@@ -1,0 +1,70 @@
+#!/bin/bash
+# Script de inicialização do Assistente Digital
+# Uso: ./scripts/start.sh
+
+set -e
+
+# Diretório base
+BASE_DIR="/home/brunoadsba/assistente"
+cd "$BASE_DIR"
+
+# Cores para output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}🤖 Iniciando Assistente Digital...${NC}"
+
+# Verificar se venv existe
+if [ ! -d "venv" ]; then
+    echo -e "${RED}❌ Ambiente virtual não encontrado em venv/${NC}"
+    exit 1
+fi
+
+# Ativar ambiente virtual
+echo -e "${YELLOW}📦 Ativando ambiente virtual...${NC}"
+source venv/bin/activate
+
+# Verificar se .env existe
+if [ ! -f ".env" ]; then
+    echo -e "${RED}❌ Arquivo .env não encontrado${NC}"
+    echo -e "${YELLOW}💡 Copie .env.example para .env e configure suas chaves${NC}"
+    exit 1
+fi
+
+# Criar diretórios de dados se não existirem
+mkdir -p data
+mkdir -p tmp
+
+# Verificar se há instância rodando
+if pgrep -f "bot_simple.py" > /dev/null; then
+    echo -e "${YELLOW}⚠️  Bot já está rodando. Parando instância anterior...${NC}"
+    pkill -f "bot_simple.py" || true
+    sleep 2
+fi
+
+echo -e "${GREEN}✅ Configuração OK!${NC}"
+echo -e "${YELLOW}🚀 Iniciando bot...${NC}"
+
+# Iniciar o bot
+export PYTHONPATH="${BASE_DIR}/src:${PYTHONPATH}"
+cd src
+python bot_simple.py &
+PID=$!
+
+# Salvar PID
+echo $PID > "${BASE_DIR}/bot.pid"
+
+echo -e "${GREEN}✅ Bot iniciado com PID: ${PID}${NC}"
+echo -e "${YELLOW}📋 Logs: tail -f ${BASE_DIR}/bot.log${NC}"
+echo -e "${YELLOW}🛑 Para parar: ./scripts/stop.sh${NC}"
+
+# Aguardar um pouco e verificar se está rodando
+sleep 3
+if ps -p $PID > /dev/null; then
+    echo -e "${GREEN}✅ Bot está rodando normalmente${NC}"
+else
+    echo -e "${RED}❌ Bot parou inesperadamente. Verifique os logs.${NC}"
+    exit 1
+fi

@@ -1,0 +1,191 @@
+{
+  "identity": {
+    "name": "Moltbot",
+    "role": "Advanced Personal AI Assistant",
+    "personality": "Helpful, proactive, intelligent, and context-aware"
+  },
+  
+  "models": {
+    "default": "groq",
+    "providers": {
+      "groq": {
+        "type": "openai",
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "apiKey": "${MOLTBOT_MODEL_PROVIDER_GROQ_API_KEY}",
+        "models": {
+          "default": "llama-3.3-70b-versatile",
+          "fast": "llama-3.1-8b-instant",
+          "reasoning": "llama-3.3-70b-versatile"
+        },
+        "temperature": 0.7,
+        "maxTokens": 8192
+      },
+      "ollama": {
+        "type": "ollama",
+        "baseUrl": "http://ollama:11434",
+        "models": {
+          "default": "llama3.2",
+          "embedding": "nomic-embed-text"
+        }
+      }
+    }
+  },
+
+  "telegram": {
+    "token": "${MOLTBOT_TELEGRAM_TOKEN}",
+    "activation": "always",
+    "allowedUsers": [],
+    "features": {
+      "voiceMessages": true,
+      "imageAnalysis": true,
+      "documentProcessing": true,
+      "inlineQueries": true
+    }
+  },
+
+  "tools": {
+    "browser": {
+      "enabled": true,
+      "type": "chromium",
+      "endpoint": "ws://moltbot-browser:3000",
+      "headless": true,
+      "defaultTimeout": 60000,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "features": {
+        "screenshots": true,
+        "pdfGeneration": true,
+        "cookiePersistence": true
+      }
+    },
+    
+    "exec": {
+      "enabled": true,
+      "type": "shell",
+      "defaultShell": "/bin/bash",
+      "allowlist": [
+        "/app/workspace/scripts/*",
+        "/app/workspace/automation/*"
+      ],
+      "timeout": 300000,
+      "maxOutputSize": 1048576
+    },
+    
+    "rag": {
+      "enabled": true,
+      "type": "chroma",
+      "endpoint": "http://chroma-db:8000",
+      "collections": {
+        "knowledge": "personal_knowledge_base",
+        "conversations": "conversation_history",
+        "documents": "document_store"
+      },
+      "embeddingModel": "nomic-embed-text",
+      "chunkSize": 1000,
+      "chunkOverlap": 200,
+      "topK": 5
+    },
+    
+    "filesystem": {
+      "enabled": true,
+      "basePath": "/app/workspace",
+      "allowedExtensions": [
+        ".txt", ".md", ".json", ".yaml", ".yml",
+        ".py", ".js", ".ts", ".sh", ".bash",
+        ".pdf", ".docx", ".csv"
+      ],
+      "maxFileSize": 10485760
+    },
+    
+    "notebooklm": {
+      "enabled": true,
+      "url": "${NOTEBOOKLM_URL}",
+      "scriptPath": "/app/workspace/scripts/notebooklm_query.py",
+      "timeout": 120000
+    }
+  },
+
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/app/workspace"],
+        "enabled": true
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-playwright"],
+        "enabled": true
+      },
+      "memory": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-memory"],
+        "enabled": true
+      },
+      "sequential-thinking": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+        "enabled": true
+      }
+    }
+  },
+
+  "capabilities": {
+    "webSearch": true,
+    "codeExecution": true,
+    "documentAnalysis": true,
+    "imageGeneration": false,
+    "voiceTranscription": true,
+    "scheduling": true,
+    "reminders": true,
+    "contextRetention": true
+  },
+
+  "workspace": {
+    "dir": "/app/workspace",
+    "structure": {
+      "scripts": "/app/workspace/scripts",
+      "automation": "/app/workspace/automation",
+      "documents": "/app/workspace/documents",
+      "downloads": "/app/workspace/downloads",
+      "temp": "/app/workspace/temp"
+    }
+  },
+
+  "memory": {
+    "shortTerm": {
+      "enabled": true,
+      "maxMessages": 50
+    },
+    "longTerm": {
+      "enabled": true,
+      "provider": "chroma",
+      "autoSave": true,
+      "summarization": true
+    }
+  },
+
+  "logging": {
+    "level": "${MOLTBOT_LOG_LEVEL}",
+    "format": "json",
+    "outputs": ["console", "file"],
+    "file": "/app/logs/moltbot.log",
+    "rotation": {
+      "maxSize": "100M",
+      "maxFiles": 10
+    }
+  },
+
+  "security": {
+    "sandboxExecution": true,
+    "validateInputs": true,
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequestsPerMinute": 60
+    }
+  }
+}
