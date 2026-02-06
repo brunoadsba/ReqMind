@@ -10,16 +10,10 @@ import pytz
 import asyncio
 import logging
 from telegram import Bot
-from pathlib import Path
+
+from config.settings import config
 
 logger = logging.getLogger(__name__)
-
-
-def get_data_dir() -> Path:
-    """Retorna o diretório de dados persistente"""
-    data_dir = Path.home() / ".assistente" / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return data_dir
 
 
 class ReminderNotifier:
@@ -30,7 +24,8 @@ class ReminderNotifier:
         self.password = os.getenv("SMTP_PASSWORD")
         self.telegram_token = os.getenv("TELEGRAM_TOKEN")
         self.telegram_chat_id = 6974901522  # Seu user_id
-        self.reminders_file = str(get_data_dir() / "reminders.json")
+        # Storage persistente em config.DATA_DIR (config.REMINDERS_FILE)
+        self.reminders_file = str(config.REMINDERS_FILE)
         self.tz = pytz.timezone("America/Sao_Paulo")
         self.bot = None
 

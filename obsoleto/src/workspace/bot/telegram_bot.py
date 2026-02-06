@@ -1,18 +1,27 @@
-"""Telegram Bot - Interface do Moltbot"""
+"""Telegram Bot - Interface do Moltbot (LEGADO)
+
+Este arquivo foi movido para o diretório obsoleto.
+Hoje o bot oficial usa `src/bot_simple.py` com a arquitetura modularizada.
+"""
 import os
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import sys
-sys.path.insert(0, '/home/brunoadsba/clawd/moltbot-setup')
+
+sys.path.insert(0, "/home/brunoadsba/clawd/moltbot-setup")
 from workspace.core import create_agent
 from workspace.storage.sqlite_store import SQLiteStore
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 agent = create_agent()
 store = SQLiteStore()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -26,9 +35,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Como posso ajudar?"
     )
 
+
 async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
     store.clear_history()
     await update.message.reply_text("✅ Histórico limpo!")
+
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tools = agent.tools.list_tools()
@@ -38,40 +49,44 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"• {', '.join(tools)}"
     )
 
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     logger.info(f"Mensagem recebida: {user_message}")
-    
+
     await update.message.chat.send_action("typing")
-    
+
     try:
         history = store.get_history(limit=10)
         response = await agent.run(user_message, history)
-        
+
         store.add_message("user", user_message)
         store.add_message("assistant", response)
         store.log_metric("message_processed", {"length": len(user_message)})
-        
+
         await update.message.reply_text(response)
     except Exception as e:
         logger.error(f"Erro: {e}", exc_info=True)
         await update.message.reply_text(f"❌ Erro: {str(e)}")
 
+
 def main():
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
         raise ValueError("TELEGRAM_TOKEN não configurado!")
-    
+
     logger.info("Iniciando Moltbot...")
-    
+
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("clear", clear))
     app.add_handler(CommandHandler("status", status))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
+
     logger.info("Bot rodando!")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
+
 if __name__ == "__main__":
     main()
+

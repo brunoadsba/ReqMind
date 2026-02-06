@@ -11,7 +11,7 @@ class ToolRegistry:
     
     def register(self, name: str, function: Callable, schema: Dict):
         self.tools[name] = {"function": function, "schema": schema}
-        logger.info(f"Ferramenta registrada: {name}")
+        logger.info("tool_registrada name=%s", name)
     
     def get_schemas(self) -> list:
         return [tool["schema"] for tool in self.tools.values()]
@@ -22,10 +22,10 @@ class ToolRegistry:
         
         try:
             result = await self.tools[name]["function"](**args)
-            logger.info(f"Ferramenta '{name}' executada")
+            logger.info("tool_executada name=%s", name)
             return result
         except Exception as e:
-            logger.error(f"Erro ao executar '{name}': {e}")
+            logger.error("erro_ao_executar_tool name=%s error=%s", name, e)
             return {"success": False, "error": str(e)}
     
     def list_tools(self) -> list:

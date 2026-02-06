@@ -91,7 +91,8 @@ class Config:
     # Reminders
     @property
     def REMINDERS_FILE(self) -> Path:
-        return self.TEMP_DIR / "moltbot_reminders.json"
+        # Arquivo de lembretes persistente em DATA_DIR
+        return self.DATA_DIR / "reminders.json"
 
     # Timezone
     TIMEZONE: str = "America/Sao_Paulo"
@@ -99,6 +100,29 @@ class Config:
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    # LLM providers & quotas (valores <= 0 significam \"sem limite\")
+    @property
+    def LLM_PROVIDERS_ORDER(self) -> List[str]:
+        raw = os.getenv("LLM_PROVIDERS_ORDER")
+        if raw:
+            return [p.strip() for p in raw.split(",") if p.strip()]
+        # Ordem padrão: Groq primeiro, depois NVIDIA (Kimi)
+        return ["groq", "nvidia"]
+
+    @property
+    def LLM_GROQ_DAILY_LIMIT_TOKENS(self) -> int:
+        try:
+            return int(os.getenv("LLM_GROQ_DAILY_LIMIT_TOKENS", "0"))
+        except ValueError:
+            return 0
+
+    @property
+    def LLM_NVIDIA_DAILY_LIMIT_TOKENS(self) -> int:
+        try:
+            return int(os.getenv("LLM_NVIDIA_DAILY_LIMIT_TOKENS", "0"))
+        except ValueError:
+            return 0
 
 
 # Instância global de configuração

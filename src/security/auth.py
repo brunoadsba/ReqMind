@@ -48,8 +48,10 @@ def require_auth(func):
 
         if not allowed or user_id not in allowed:
             logger.warning(
-                f"❌ Acesso negado: user_id={user_id}, "
-                f"username={user.username}, name={user.full_name}"
+                "auth_negado user_id=%s username=%s name=%s",
+                user_id,
+                user.username,
+                user.full_name,
             )
             await update.message.reply_text(
                 "❌ Acesso negado. Este bot é privado.\n"
@@ -57,7 +59,12 @@ def require_auth(func):
             )
             return
 
-        logger.info(f"✅ Acesso autorizado: {user_id} ({user.username})")
+        logger.info(
+            "auth_ok user_id=%s username=%s name=%s",
+            user_id,
+            user.username,
+            user.full_name,
+        )
         return await func(update, context, *args, **kwargs)
 
     return wrapper

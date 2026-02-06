@@ -1017,15 +1017,23 @@ Inicia o bot e mostra mensagem de boas-vindas.
 ```
 /start
 
-Bot: 🤖 Moltbot ativo!
+Bot:
 
-Sou seu assistente pessoal com acesso a:
-• Busca na web
-• Memória persistente
-• Operações de arquivo
-• Git
+🤖 Olá! Sou seu assistente pessoal.
 
-Como posso ajudar?
+Posso ajudar você com:
+• 💬 Chat inteligente e respostas em áudio
+• 🌐 Busca na web (DuckDuckGo)
+• 🧠 Memória persistente de conversas e conhecimento
+• 📁 Operações de arquivos (ler/escrever/listar)
+• 🔍 Busca em código e análise Git
+• 🖼️ Análise de imagens, vídeos e documentos
+• 🎨 Geração de imagens com IA
+• 🎬 Transcrição de áudio e vídeos
+• 🌤️ Clima, notícias e lembretes
+• 📊 Criação de gráficos e visualizações
+
+Como posso ser útil para você hoje?
 ```
 
 ---
@@ -1049,7 +1057,7 @@ Mostra status do sistema e ferramentas disponíveis.
 
 Bot: 🟢 Sistema operacional
 
-Ferramentas disponíveis: 15
+Ferramentas disponíveis: 14
 • web_search, rag_search, save_memory, search_code, 
   read_file, write_file, list_directory, git_status, 
   git_diff, get_weather, get_news, create_reminder, 

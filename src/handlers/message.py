@@ -50,7 +50,12 @@ async def handle_message(
     """Handler para mensagens de texto"""
     user_message = update.message.text
     user_id = update.effective_user.id
-    logger.info(f"Mensagem recebida de user_id={user_id}, len={len(user_message)}")
+    logger.info(
+        "mensagem_recebida user_id=%s chat_id=%s len=%d",
+        user_id,
+        update.effective_chat.id if update.effective_chat else None,
+        len(user_message or ""),
+    )
 
     # Detecta se usuário quer resposta em áudio
     send_audio = any(

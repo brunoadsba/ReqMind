@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Moltbot Core - Implementação básica do bot Telegram
-Este é um exemplo funcional que pode ser expandido
+Moltbot Core - Implementação básica do bot Telegram (LEGADO)
+
+Este arquivo foi movido para o diretório obsoleto.
+Hoje o bot oficial usa `src/bot_simple.py` com o agente completo e tool calling.
 """
 
 import os
@@ -18,30 +20,35 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+
 
 class MoltbotCore:
     def __init__(self):
         self.conversation_history = {}
-    
+
     def call_llm(self, user_id: int, message: str) -> str:
         """Chama o LLM (Groq)"""
         if user_id not in self.conversation_history:
             self.conversation_history[user_id] = []
-        
+
         # Adiciona mensagem do usuário
-        self.conversation_history[user_id].append({
-            "role": "user",
-            "content": message
-        })
-        
-        # Mantém apenas últimas 10 mensagens
+        self.conversation_history[user_id].append(
+            {
+                "role": "user",
+                "content": message,
+            }
+        )
+
+        # Mantém apenas últimas 20 mensagens
         if len(self.conversation_history[user_id]) > 20:
-            self.conversation_history[user_id] = self.conversation_history[user_id][-20:]
-        
+            self.conversation_history[user_id] = self.conversation_history[user_id][
+                -20:
+            ]
+
         # System prompt
         system_prompt = {
             "role": "system",
@@ -54,48 +61,54 @@ Você pode:
 - Acessar memória de longo prazo
 - Automatizar tarefas no navegador
 
-Seja proativo, inteligente e útil. Quando precisar usar ferramentas, explique o que vai fazer."""
+Seja proativo, inteligente e útil. Quando precisar usar ferramentas, explique o que vai fazer.""",
         }
-        
+
         messages = [system_prompt] + self.conversation_history[user_id]
-        
+
         try:
             response = requests.post(
                 GROQ_API_URL,
                 headers={
                     "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": "llama-3.3-70b-versatile",
                     "messages": messages,
                     "temperature": 0.7,
-                    "max_tokens": 2048
+                    "max_tokens": 2048,
                 },
-                timeout=30
+                timeout=30,
             )
-            
+
             if response.status_code == 200:
                 result = response.json()
                 assistant_message = result["choices"][0]["message"]["content"]
-                
+
                 # Adiciona resposta ao histórico
-                self.conversation_history[user_id].append({
-                    "role": "assistant",
-                    "content": assistant_message
-                })
-                
+                self.conversation_history[user_id].append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_message,
+                    }
+                )
+
                 return assistant_message
             else:
-                logger.error(f"Erro na API Groq: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Erro na API Groq: {response.status_code} - {response.text}"
+                )
                 return "Desculpe, tive um problema ao processar sua mensagem."
-        
+
         except Exception as e:
             logger.error(f"Erro ao chamar LLM: {e}")
             return "Desculpe, ocorreu um erro ao processar sua mensagem."
 
+
 # Instância global
 bot_core = MoltbotCore()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler do comando /start"""
@@ -112,8 +125,9 @@ Posso ajudar você com:
 🤖 Automação de tarefas
 
 Como posso ajudar você hoje?"""
-    
+
     await update.message.reply_text(welcome_message)
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler do comando /help"""
@@ -134,6 +148,7 @@ Exemplos:
 """
     await update.message.reply_text(help_text)
 
+
 async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Limpa o histórico de conversa"""
     user_id = update.effective_user.id
@@ -141,16 +156,17 @@ async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         del bot_core.conversation_history[user_id]
     await update.message.reply_text("✅ Histórico de conversa limpo!")
 
+
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostra status do sistema"""
     status = "🟢 Sistema Operacional\n\n"
-    
+
     # Testa serviços
     services = {
         "ChromaDB": "http://chroma-db:8000/api/v1/heartbeat",
-        "Ollama": "http://ollama:11434/api/tags"
+        "Ollama": "http://ollama:11434/api/tags",
     }
-    
+
     for service, url in services.items():
         try:
             response = requests.get(url, timeout=2)
@@ -158,26 +174,28 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 status += f"✅ {service}: OK\n"
             else:
                 status += f"⚠️ {service}: Erro {response.status_code}\n"
-        except:
+        except Exception:
             status += f"❌ {service}: Offline\n"
-    
+
     await update.message.reply_text(status)
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler de mensagens normais"""
     user_id = update.effective_user.id
     user_message = update.message.text
-    
+
     logger.info(f"Mensagem de {user_id}: {user_message}")
-    
+
     # Mostra que está digitando
     await update.message.chat.send_action("typing")
-    
+
     # Processa com LLM
     response = bot_core.call_llm(user_id, user_message)
-    
+
     # Envia resposta
     await update.message.reply_text(response)
+
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handler de erros"""
@@ -185,32 +203,37 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update and update.message:
         await update.message.reply_text("Desculpe, ocorreu um erro. Tente novamente.")
 
+
 def main():
     """Inicia o bot"""
     if not TELEGRAM_TOKEN:
         logger.error("TELEGRAM_TOKEN não configurado!")
         return
-    
+
     if not GROQ_API_KEY:
         logger.error("GROQ_API_KEY não configurado!")
         return
-    
+
     logger.info("Iniciando Moltbot...")
-    
+
     # Cria aplicação
     application = Application.builder().token(TELEGRAM_TOKEN).build()
-    
+
     # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("clear", clear_command))
     application.add_handler(CommandHandler("status", status_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
     application.add_error_handler(error_handler)
-    
+
     # Inicia
     logger.info("Moltbot iniciado! Aguardando mensagens...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
+
 if __name__ == "__main__":
     main()
+

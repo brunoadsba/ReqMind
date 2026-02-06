@@ -8,8 +8,15 @@ import asyncio
 import sys
 import os
 from datetime import datetime
+from pathlib import Path
 
-sys.path.insert(0, "/home/brunoadsba/Assistente-Digital/assistente")
+# Path do projeto: raiz do repo (parent de tests/)
+_repo_root = Path(__file__).resolve().parent.parent
+_src = _repo_root / "src"
+if _src.exists() and str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
+elif str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
 
 from workspace.tools.filesystem import read_file, write_file, list_directory
 from workspace.tools.code_tools import search_code, git_status, git_diff
@@ -60,14 +67,14 @@ async def test_filesystem():
 async def test_git():
     print(f"\n{BOLD}6. GIT - Status e Diff{RESET}")
 
-    status_result = await git_status("/home/brunoadsba/Assistente-Digital/assistente")
+    status_result = await git_status(str(_repo_root))
     if status_result.get("success"):
         print(f"{GREEN}✅ Git status funcionando!{RESET}")
         print(f"   Status: {status_result.get('status', 'N/A')[:80]}...")
     else:
         print(f"{RED}❌ Git status falhou: {status_result.get('error')}{RESET}")
 
-    diff_result = await git_diff("/home/brunoadsba/Assistente-Digital/assistente")
+    diff_result = await git_diff(str(_repo_root))
     if diff_result.get("success"):
         print(f"{GREEN}✅ Git diff funcionando!{RESET}")
     else:
@@ -81,7 +88,7 @@ async def test_search_code():
 
     result = await search_code(
         "async def",
-        path="/home/brunoadsba/Assistente-Digital/assistente",
+        path=str(_repo_root),
         extensions=[".py"],
     )
 

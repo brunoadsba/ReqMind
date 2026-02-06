@@ -7,14 +7,14 @@ import logging
 import time
 import asyncio
 import requests
-from groq import Groq
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
-from .tools import ToolRegistry
-from security.rate_limiter import message_limiter
-from utils.retry import retry_with_backoff_sync
+
 from config.settings import config
+from security.rate_limiter import message_limiter
+from workspace.core.llm_router import LlmRouter
+from .tools import ToolRegistry
 
 # Import run management
 from workspace.runs import RunManager, RunMetrics
@@ -30,10 +30,9 @@ class Agent:
     """Agente com arquitetura de memoria em 3 camadas"""
     
     def __init__(self, tool_registry: ToolRegistry):
-        self.groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
-        # GLM removido - migrado para Groq Vision (mais rápido e confiável)
         self.tools = tool_registry
-        self.model = "llama-3.3-70b-versatile"
+        # LlmRouter encapsula chamadas ao Groq (e futuros provedores)
+        self.llm_router = LlmRouter.from_env()
         self.system_prompt = self._load_context_pack()
         self.run_manager = RunManager()
         self.memory_manager = MemoryManager()
@@ -57,21 +56,6 @@ class Agent:
         return any(
             word in message.lower()
             for word in ["imagem", "foto", "figura", "screenshot", "print"]
-        )
-
-    @staticmethod
-    @retry_with_backoff_sync(max_retries=3, exceptions=(ConnectionError, TimeoutError, OSError))
-    def _groq_chat_sync(groq_client, model: str, messages: list, tools=None, tool_choice="auto", **kwargs):
-        """Chamada Groq chat com retry (sync)."""
-        max_tokens = kwargs.get("max_tokens") or config.GROQ_MAX_TOKENS
-        if tools is not None:
-            return groq_client.chat.completions.create(
-                model=model, messages=messages, tools=tools, tool_choice=tool_choice,
-                temperature=kwargs.get("temperature", 0.7), max_tokens=max_tokens
-            )
-        return groq_client.chat.completions.create(
-            model=model, messages=messages,
-            temperature=kwargs.get("temperature", 0.7), max_tokens=max_tokens
         )
 
     @staticmethod
@@ -168,9 +152,14 @@ class Agent:
             run_dir = self.run_manager.create_run(
                 user_message=user_message,
                 user_id=user_id,
-                image_url=image_url
+                image_url=image_url,
             )
-            logger.info(f"Run criado: {run_dir.name}")
+            logger.info(
+                "run_criado id=%s user_id=%s len=%d",
+                run_dir.name,
+                user_id,
+                len(user_message or ""),
+            )
         except Exception as e:
             logger.error(f"Erro ao criar run: {e}")
             run_dir = None
@@ -193,43 +182,98 @@ class Agent:
         while True:
             iteration = tools_used + 1
             if iteration > safety_cap:
-                logger.warning(f"Safety cap de iterações atingido ({safety_cap})")
+                logger.warning(
+                    "agent_safety_cap atingido safety_cap=%d user_id=%s", safety_cap, user_id
+                )
                 status = "partial"
                 output_text = "Resposta interrompida por segurança. Tente uma pergunta mais direta."
                 self._finalize_run(run_dir, output_text, user_message, start_time, tools_used, status, messages)
                 return output_text
 
-            logger.info(f"Iteração {iteration}/{safety_cap}")
+            logger.info(
+                "agent_iteracao run=%s iter=%d/%d tools_usados=%d",
+                run_dir.name if run_dir else None,
+                iteration,
+                safety_cap,
+                tools_used,
+            )
 
             try:
                 schemas = self.tools.get_schemas()
                 response = await asyncio.get_event_loop().run_in_executor(
                     None,
-                    lambda: self._groq_chat_sync(
-                        self.groq, self.model, messages,
-                        tools=schemas, tool_choice="auto",
+                    lambda: self.llm_router.chat(
+                        messages,
+                        tools=schemas,
+                        tool_choice="auto",
+                        user_id=user_id,
                     ),
                 )
             except Exception as e:
                 error_msg = str(e)
+                # Limite diário configurado para o Groq
+                if "LLM_GROQ_DAILY_LIMIT_REACHED" in error_msg:
+                    daily_limit = config.LLM_GROQ_DAILY_LIMIT_TOKENS
+                    limit_msg = (
+                        "Limite diário de uso do modelo Groq atingido. "
+                        "Tente novamente amanhã ou faça uma pergunta coberta pelas memórias salvas."
+                    )
+                    self._finalize_run(
+                        run_dir,
+                        limit_msg,
+                        user_message,
+                        start_time,
+                        tools_used,
+                        "daily_limit_groq",
+                        messages,
+                    )
+                    return limit_msg
+
                 if "429" in error_msg or "rate_limit" in error_msg.lower() or "Rate limit" in error_msg:
-                    logger.warning("Rate limit Groq (429): %s", error_msg[:200])
+                    logger.warning(
+                        "llm_rate_limit provider=groq user_id=%s msg=\"%s\"",
+                        user_id,
+                        error_msg[:120],
+                    )
                     nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip()
                     if nvidia_key:
-                        try:
-                            kimi_content = await asyncio.get_event_loop().run_in_executor(
-                                None,
-                                lambda: nvidia_kimi_chat(nvidia_key, messages, max_tokens=4096, temperature=0.7, timeout=20),
+                        # Limite diário opcional para NVIDIA/Kimi
+                        from workspace.storage.llm_usage import has_reached_daily_limit
+
+                        if has_reached_daily_limit("nvidia", config.LLM_NVIDIA_DAILY_LIMIT_TOKENS):
+                            logger.warning(
+                                "llm_daily_limit provider=nvidia user_id=%s pulando_fallback_kimi",
+                                user_id,
                             )
-                            if kimi_content:
-                                logger.info("Resposta obtida via Kimi K2.5 (fallback)")
-                                self._finalize_run(
-                                    run_dir, kimi_content, user_message, start_time,
-                                    tools_used, "fallback_kimi", messages,
+                        else:
+                            try:
+                                kimi_content = await asyncio.get_event_loop().run_in_executor(
+                                    None,
+                                    lambda: nvidia_kimi_chat(
+                                        nvidia_key,
+                                        messages,
+                                        max_tokens=4096,
+                                        temperature=0.7,
+                                        timeout=20,
+                                    ),
                                 )
-                                return kimi_content
-                        except Exception as kimi_e:
-                            logger.warning("Fallback Kimi K2.5 falhou: %s", kimi_e)
+                                if kimi_content:
+                                    logger.info(
+                                        "llm_resposta_fallback provider=nvidia kind=kimi_k2_5 user_id=%s",
+                                        user_id,
+                                    )
+                                    self._finalize_run(
+                                        run_dir,
+                                        kimi_content,
+                                        user_message,
+                                        start_time,
+                                        tools_used,
+                                        "fallback_kimi",
+                                        messages,
+                                    )
+                                    return kimi_content
+                            except Exception as kimi_e:
+                                logger.warning("Fallback Kimi K2.5 falhou: %s", kimi_e)
                     rate_msg = self._format_rate_limit_message(error_msg)
                     # Fallback RAG: responder da memória (ex.: NR-29) quando API indisponível
                     try:
@@ -264,7 +308,7 @@ class Agent:
                                     )
                                     return note + raw
                     except Exception as rag_e:
-                        logger.debug("Fallback RAG ignorado: %s", rag_e)
+                        logger.debug("fallback_rag_ignorado error=%s", rag_e)
                     self._finalize_run(
                         run_dir, rate_msg, user_message, start_time,
                         tools_used, "rate_limit", messages,
@@ -277,26 +321,31 @@ class Agent:
                     or "Error code: 400" in error_msg
                 )
                 if is_tool_error:
-                    logger.debug("Tool calling error (full): %s", error_msg)
+                    logger.debug("tool_calling_erro detalhe=%s", error_msg)
                     logger.warning(
-                        "Tool calling falhou, tentando sem tools: %s",
-                        error_msg[:300] if len(error_msg) > 300 else error_msg,
+                        "tool_calling_falhou provider=groq action=fallback_sem_tools user_id=%s",
+                        user_id,
                     )
                     try:
                         response = await asyncio.get_event_loop().run_in_executor(
                             None,
-                            lambda: self._groq_chat_sync(self.groq, self.model, messages),
+                            lambda: self.llm_router.chat(messages, user_id=user_id),
                         )
                         output_text = (response.choices[0].message.content or "").strip()
                         if not output_text:
                             output_text = "Não consegui processar com ferramentas; tente reformular a pergunta."
                         self._finalize_run(
-                            run_dir, output_text, user_message, start_time,
-                            tools_used, "fallback_no_tools", messages,
+                            run_dir,
+                            output_text,
+                            user_message,
+                            start_time,
+                            tools_used,
+                            "fallback_no_tools",
+                            messages,
                         )
                         return output_text
                     except Exception as fallback_e:
-                        logger.warning("Fallback sem tools falhou: %s", fallback_e)
+                        logger.warning("fallback_sem_tools_falhou error=%s", fallback_e)
                         fallback_text = "Desculpe, tive um problema ao processar sua solicitação. Tente novamente."
                         self._finalize_run(
                             run_dir, fallback_text, user_message, start_time,
@@ -402,9 +451,15 @@ class Agent:
         try:
             duration = (time.time() - start_time) * 1000  # ms
 
-            # Estimar tokens
-            tokens_input = sum(len(m.get('content', '')) for m in messages if m.get('role') in ['system', 'user']) // 4
-            tokens_output = sum(len(m.get('content', '')) for m in messages if m.get('role') == 'assistant') // 4
+            # Estimar tokens (aprox. 4 chars por token)
+            tokens_input = (
+                sum(len(m.get("content", "")) for m in messages if m.get("role") in ["system", "user"])
+                // 4
+            )
+            tokens_output = (
+                sum(len(m.get("content", "")) for m in messages if m.get("role") == "assistant")
+                // 4
+            )
 
             # Salvar output
             self.run_manager.save_output(run_dir, output_text)
@@ -415,13 +470,29 @@ class Agent:
                 duration_ms=duration,
                 tokens_input=tokens_input,
                 tokens_output=tokens_output,
-                iterations=len([m for m in messages if m.get('role') == 'assistant']),
+                iterations=len([m for m in messages if m.get("role") == "assistant"]),
                 tools_used=tools_used,
-                status=status
+                status=status,
             )
             self.run_manager.save_metrics(run_dir, metrics)
+
+            # Atualizar uso diário por provedor (aproximação suficiente para uso pessoal)
+            from workspace.storage import llm_usage
+
+            provider: Optional[str] = None
+            if status in ("success", "fallback_no_tools", "rate_limit", "rate_limit_rag_fallback", "daily_limit_groq"):
+                provider = "groq"
+            elif status == "fallback_kimi":
+                provider = "nvidia"
+
+            if provider:
+                try:
+                    llm_usage.add_usage(provider, tokens_input, tokens_output)
+                except Exception as usage_err:
+                    logger.error("Erro ao registrar uso de tokens (%s): %s", provider, usage_err)
+
         except Exception as e:
-            logger.error(f"Erro ao salvar run/metrics: {e}")
+            logger.error(f"Erro ao salvar run/metrics ou uso de tokens: {e}")
 
         logger.info(f"Run finalizado: {run_dir.name} ({status}, {tools_used} tools)")
 

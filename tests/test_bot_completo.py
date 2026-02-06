@@ -11,9 +11,12 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 # Usa src do projeto onde este teste está (evita path fixo de outro diretório)
-_src = Path(__file__).resolve().parent.parent / "src"
+_repo_root = Path(__file__).resolve().parent.parent
+_src = _repo_root / "src"
 if _src.exists() and str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
+elif str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
 
 from workspace.tools.web_search import web_search
 from workspace.tools.rag_tools import rag_search, save_memory
@@ -105,7 +108,7 @@ async def test_search_code():
 
     result = await search_code(
         "async def",
-        path="/home/brunoadsba/Assistente-Digital/assistente",
+        path=str(_repo_root),
         extensions=[".py"],
     )
 
@@ -160,7 +163,7 @@ async def test_git():
     print_header("6. GIT - Status e Diff do Repositório")
 
     print(f"{YELLOW}Testando git status...{RESET}")
-    status_result = await git_status("/home/brunoadsba/Assistente-Digital/assistente")
+    status_result = await git_status(str(_repo_root))
     if status_result.get("success"):
         print(f"{GREEN}✅ Git Status funcionando!{RESET}")
         status = status_result.get("status", "")
@@ -172,7 +175,7 @@ async def test_git():
         print(f"{RED}❌ Git Status falhou: {status_result.get('error')}{RESET}")
 
     print(f"{YELLOW}Testando git diff...{RESET}")
-    diff_result = await git_diff("/home/brunoadsba/Assistente-Digital/assistente")
+    diff_result = await git_diff(str(_repo_root))
     if diff_result.get("success"):
         print(f"{GREEN}✅ Git Diff funcionando!{RESET}")
         diff = diff_result.get("diff", "")
@@ -240,7 +243,7 @@ async def run_all_tests():
     )
     print(f"{BOLD}{BLUE}{'=' * 70}{RESET}")
     print(f"\n{CYAN}Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}{RESET}")
-    print(f"{CYAN}Diretório: /home/brunoadsba/Assistente-Digital/assistente{RESET}\n")
+    print(f"{CYAN}Diretório: {_repo_root}{RESET}\n")
 
     tests = [
         ("1. Web Search (DuckDuckGo)", test_web_search),

@@ -1,4 +1,6 @@
-# Uso prático do Browserless (porta 3002)
+# Uso prático do Browserless (porta 3002) – LEGADO
+
+> Este guia foi movido para o diretório `obsoleto/docs` para não poluir o foco do bot Telegram atual.
 
 ## 1. Subir o Browserless
 
@@ -53,7 +55,7 @@ python src/workspace/scripts/web_search.py fetch "https://exemplo.com/artigo"
 
 ## 5. Script mínimo para testar no Cursor
 
-Use o script `scripts/browserless_exemplo.py` (ver abaixo) para abrir uma URL, esperar o carregamento e extrair título e um trecho de texto. Útil para validar que a conexão com o Browserless está ok.
+Use o script `scripts/browserless_exemplo.py` (agora em `obsoleto/scripts/`) para abrir uma URL, esperar o carregamento e extrair título e um trecho de texto.
 
 ## 6. Integração no código
 
@@ -80,3 +82,4 @@ with sync_playwright() as p:
 | `Connection refused` na 3002 | Subir o container: `docker run -d -p 3002:3000 --name browserless ghcr.io/browserless/chromium` |
 | Google bloqueia / reCAPTCHA | Use `fetch` em outros sites ou busque por API (e.g. SerpAPI) para produção |
 | Playwright não acha Chromium | Rodar `playwright install chromium` |
+

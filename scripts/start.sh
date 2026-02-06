@@ -16,6 +16,9 @@ NC='\033[0m' # No Color
 
 echo -e "${YELLOW}🤖 Iniciando Assistente Digital...${NC}"
 
+# Forçar uso da implementação pura do charset_normalizer para evitar segfaults
+export CHARSET_NORMALIZER_PURE_PYTHON=1
+
 # Verificar se venv existe
 if [ ! -d "venv" ]; then
     echo -e "${RED}❌ Ambiente virtual não encontrado em venv/${NC}"

@@ -3,6 +3,7 @@
 ### 1. Objetivo
 
 Organizar as próximas evoluções do Assistente Digital mantendo o **foco em uso pessoal (um único usuário)**, reduzindo riscos de erros operacionais e melhorando o uso de **múltiplas LLMs com limites de tokens/quotas**.
+Escopo atual: **apenas o bot Telegram**, com código-fonte oficial em `~/ReqMind/assistente`.
 
 ---
 
@@ -11,8 +12,9 @@ Organizar as próximas evoluções do Assistente Digital mantendo o **foco em us
 **Meta:** evitar divergência de código, múltiplas instâncias e confusão de ambientes.
 
 1. **Escolher diretório oficial do projeto**
-   - Definir um único diretório como fonte da verdade do código (ex.: `Assistente-Digital/assistente`).
-   - Ajustar `config/settings.py` (`MOLTBOT_DIR`, `DATA_DIR`, `TEMP_DIR`) para apontar para esse diretório.
+   - Definir um único diretório como fonte da verdade do código (atual: `~/ReqMind/assistente`).
+   - Se existir diretório separado de deploy (ex.: `/home/brunoadsba/clawd/moltbot-setup`), tratá‑lo apenas como destino de deploy, nunca como fonte de edição.
+   - Ajustar `config/settings.py` (`MOLTBOT_DIR`, `DATA_DIR`, `TEMP_DIR`) para apontar para o diretório oficial de código.
 
 2. **Padronizar scripts de start/stop/status**
    - Garantir que todos os comandos (`make start/stop/status`) usem sempre os scripts seguros (`start_bot_safe.sh`, `stop_bot.sh`, `healthcheck.sh`), apontando para o diretório oficial.
@@ -26,6 +28,10 @@ Organizar as próximas evoluções do Assistente Digital mantendo o **foco em us
    - Rodar o bot diretamente do diretório oficial.
    - Se ainda for necessário sync para outro local, criar script explícito (ex.: `make deploy-local`) documentado.
 
+5. **Isolar código legado**
+   - Manter implementações antigas (ex.: sandbox, bot protótipo, integrações experimentais) em um diretório `obsoleto/`.
+   - Garantir que somente o caminho oficial (`src/bot_simple.py`, `src/handlers/`, `src/workspace/core/agent.py`, etc.) seja usado em produção e em testes.
+
 ---
 
 ### 3. Fase 2 – Multi‑LLM e limites de tokens
@@ -34,8 +40,9 @@ Organizar as próximas evoluções do Assistente Digital mantendo o **foco em us
 
 #### 3.1. Roteador de LLMs (`llm_router`)
 
-1. **Criar módulo de roteamento**
+1. **Extrair módulo de roteamento da lógica atual**
    - Novo arquivo sugerido: `src/workspace/core/llm_router.py`.
+   - Mover para esse módulo a lógica de fallback já existente em `src/workspace/core/agent.py` (ordem atual: Groq → NVIDIA Kimi → RAG).
    - Interface única para o Agent:
      - `async def chat(messages, tools=None, tool_choice="auto", max_tokens=None, user_id=None) -> LLMResponse`.
 
@@ -151,6 +158,8 @@ Organizar as próximas evoluções do Assistente Digital mantendo o **foco em us
 ---
 
 ### 6. Fase 5 – Refinos opcionais
+
+**Meta:** melhorias estruturais opcionais, a serem feitas apenas após estabilizar Fases 1–4 no bot Telegram.
 
 1. **Melhorias graduais no RAG**
    - Quando fizer sentido, usar embeddings locais (por exemplo com Chromadb já listado em dependências) mantendo o foco em volume pequeno/médio.

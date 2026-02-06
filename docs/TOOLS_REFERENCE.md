@@ -1,6 +1,6 @@
 # 🛠️ Tools Reference - Assistente Digital
 
-Referência completa de todas as 15 ferramentas disponíveis no Assistente Digital.
+Referência completa de todas as 14 ferramentas disponíveis no Assistente Digital.
 
 ## Índice
 
@@ -173,7 +173,7 @@ result = await list_directory("~/projetos")
 
 **Parâmetros:**
 - `query` (string, obrigatório) - Termo a buscar
-- `path` (string, opcional) - Diretório (padrão: ~/clawd)
+- `path` (string, opcional) - Diretório base do projeto (padrão: diretório oficial do bot)
 - `extensions` (array, opcional) - Extensões de arquivo (padrão: [".py", ".js", ".ts"])
 
 **Retorno:**
@@ -197,7 +197,7 @@ result = await search_code("async def", path="~/projeto", extensions=[".py"])
 **Descrição:** Mostra status do repositório Git.
 
 **Parâmetros:**
-- `repo_path` (string, opcional) - Caminho do repositório (padrão: ~/clawd)
+- `repo_path` (string, opcional) - Caminho do repositório (padrão: diretório oficial do bot)
 
 **Retorno:**
 ```json

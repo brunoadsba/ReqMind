@@ -100,13 +100,13 @@ async def main():
     if not token:
         raise ValueError("TELEGRAM_TOKEN não configurado!")
 
-    logger.info("🚀 Iniciando Assistente Digital...")
+    logger.info("boot_iniciando_bot")
 
     # Inicia monitoramento de lembretes como task asyncio (não thread)
     from workspace.tools.reminder_notifier import notifier
 
     reminder_task = asyncio.create_task(notifier.start_monitoring())
-    logger.info("📧 Sistema de lembretes por email iniciado")
+    logger.info("lembretes_iniciados canal=email+telegram")
 
     # Configura handlers
     app = Application.builder().token(token).build()
@@ -129,7 +129,7 @@ async def main():
     await app.start()
     await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
-    logger.info("✅ Bot rodando! Aguardando mensagens...")
+    logger.info("bot_pronto status=aguardando_mensagens")
 
     # Aguarda sinal de parada
     stop_event = asyncio.Event()

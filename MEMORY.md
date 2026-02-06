@@ -69,7 +69,7 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 
 6. **src/workspace/core/tools.py**
    - Registry pattern
-   - 15 ferramentas registradas
+   - 14 ferramentas registradas (web_search, rag_search, save_memory, search_code, read_file, write_file, list_directory, git_status, git_diff, get_weather, get_news, create_reminder, create_chart, generate_image)
 
 7. **src/workspace/tools/** (vários arquivos)
    - Ferramentas específicas
@@ -106,19 +106,14 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 
 **Arquivo de memória:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json`.
 
-### 3. Dois Diretórios de Trabalho
-**Desenvolvimento:** `/home/brunoadsba/Assistente-Digital/assistente`  
-**Execução:** `/home/brunoadsba/clawd/moltbot-setup`
+### 3. Diretório de Trabalho Oficial
+**Desenvolvimento e Execução (atual):** `/home/brunoadsba/ReqMind/assistente`
 
-**Por quê:** Histórico do projeto (migração em andamento)
+**Histórico:** versões anteriores do projeto usavam dois diretórios separados:
+- Desenvolvimento em `/home/brunoadsba/Assistente-Digital/assistente`
+- Execução em `/home/brunoadsba/clawd/moltbot-setup`
 
-**Workflow:**
-1. Desenvolve em `/Assistente-Digital/assistente`
-2. Testa localmente
-3. Copia para `/clawd/moltbot-setup`
-4. Executa de lá (tem .env e venv)
-
-**TODO:** Consolidar em um único diretório.
+Essa abordagem foi consolidada: o **código-fonte oficial e os scripts de start/stop/status** agora vivem em `~/ReqMind/assistente`, e qualquer diretório externo (como `/clawd/moltbot-setup`) deve ser tratado apenas como legado ou destino eventual de deploy, não como fonte de edição.
 
 ### 4. Gerenciamento de Instâncias (2026-01-31)
 **Problema:** Múltiplas instâncias do bot rodando simultaneamente causavam conflitos no Telegram API.
@@ -438,23 +433,23 @@ assistente/
 ### 1. Setup Inicial (15 min)
 
 ```bash
-# Clone o projeto
-cd /home/brunoadsba/Assistente-Digital/assistente
+# Clone o projeto (exemplo usando ~/ReqMind)
+cd /home/brunoadsba/ReqMind
+git clone https://github.com/brunoadsba/ReqMind.git .
+
+cd assistente
 
 # Crie ambiente virtual
 python3 -m venv venv
-source venv/bin/activate
-
-# Instale dependências
-pip install -r requirements.txt
+./venv/bin/pip install -r requirements.txt
 
 # Configure .env
 cp .env.example .env
 vim .env  # Adicione suas API keys
 chmod 600 .env
 
-# Teste
-python tests/test_e2e.py
+# Teste (usando Python do venv e PYTHONPATH=src)
+PYTHONPATH=src ./venv/bin/python -m pytest tests/ -v
 ```
 
 ### 2. Entenda a Arquitetura (30 min)
@@ -509,30 +504,33 @@ Siga: `docs/DEVELOPMENT.md` → "Adicionar Nova Funcionalidade"
 
 ### Desenvolvimento Local
 ```bash
-cd /home/brunoadsba/Assistente-Digital/assistente
+cd /home/brunoadsba/ReqMind/assistente
+
+# Ative (ou use diretamente) o venv
+python3 -m venv venv  # se ainda não existir
 source venv/bin/activate
 
 # Edite código
-vim bot_simple.py
+vim src/bot_simple.py
 
-# Teste
-python tests/test_e2e.py
-python bot_simple.py  # Teste manual
+# Teste (preferencialmente via pytest)
+PYTHONPATH=src python -m pytest tests/ -v
+PYTHONPATH=src python src/bot_simple.py  # Teste manual
 ```
 
 ### Deploy para Produção
 ```bash
-# 1. Pare bot atual
-pkill -f bot_simple.py
+# 1. Parar bot (no diretório oficial)
+cd /home/brunoadsba/ReqMind/assistente
+make stop
 
-# 2. Copie alterações
-cp bot_simple.py /home/brunoadsba/clawd/moltbot-setup/
+# 2. Garantir que dependências e .env estão atualizados
+make install
 
-# 3. Inicie
-cd /home/brunoadsba/clawd/moltbot-setup
-./start_bot.sh
+# 3. Iniciar bot
+make start
 
-# 4. Verifique logs
+# 4. Verificar logs (na raiz do projeto)
 tail -f bot.log
 ```
 

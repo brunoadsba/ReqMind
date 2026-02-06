@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Exemplo prático: conectar ao Browserless (localhost:3002) e extrair dados de uma página.
-Uso: python scripts/browserless_exemplo.py [URL]
+Exemplo prático (LEGADO): conectar ao Browserless (localhost:3002) e extrair dados de uma página.
+Movido para o diretório obsoleto para não poluir o foco do bot Telegram.
+
+Uso:
+    python scripts/browserless_exemplo.py [URL]
 """
 
 import os
@@ -39,3 +42,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

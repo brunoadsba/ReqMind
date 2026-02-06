@@ -34,6 +34,11 @@ Guia de navegação da documentação do Assistente Digital de Bruno, organizado
 - **[STATUS_ATUAL.md](STATUS_ATUAL.md)** – Snapshot histórico de 2026‑02‑04 com nota de atualização.  
   - Para o **estado vigente do sistema** e roadmap atual, usar `README.md` e `MEMORY.md` como referência principal.
 
+### 1.5 Código legado / histórico
+
+- Diretório `obsoleto/` na raiz do projeto – contém implementações antigas (ex.: sandbox, protótipos de bot, exemplos de Browserless) mantidas apenas para referência histórica.  
+  - O código em `obsoleto/` **não faz parte** do caminho oficial de execução do bot; os entrypoints atuais são `src/bot_simple.py`, `src/handlers/*` e `src/workspace/core/agent.py`.
+
 ---
 
 ## 2. Auditoria e Plano de Implementação (histórico focado)
@@ -150,7 +155,7 @@ Depois:
 **Tamanho:** 11KB | **Tempo de leitura:** 20 min
 
 **Conteúdo:**
-- 🔧 15 ferramentas disponíveis
+- 🔧 14 ferramentas disponíveis
 - 📝 Parâmetros e retornos
 - 💡 Exemplos de uso
 - 🛠️ Como adicionar nova ferramenta

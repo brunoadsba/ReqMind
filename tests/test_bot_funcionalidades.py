@@ -8,9 +8,15 @@ import asyncio
 import sys
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
-# Adiciona o caminho do projeto
-sys.path.insert(0, "/home/brunoadsba/Assistente-Digital/assistente")
+# Adiciona o caminho do projeto (raiz do repo ou src/)
+_repo_root = Path(__file__).resolve().parent.parent
+_src = _repo_root / "src"
+if _src.exists() and str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
+elif str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
 
 # Importa as ferramentas
 from workspace.tools.web_search import web_search
@@ -112,7 +118,7 @@ async def test_search_code():
 
     result = await search_code(
         "async def",
-        path="/home/brunoadsba/Assistente-Digital/assistente",
+        path=str(_repo_root),
         extensions=[".py"],
     )
 
@@ -174,7 +180,7 @@ async def test_git():
 
     # Testa git status
     print_info("Testando git status...")
-    status_result = await git_status("/home/brunoadsba/Assistente-Digital/assistente")
+    status_result = await git_status(str(_repo_root))
     if status_result.get("success"):
         print_success("Git status funcionando!")
         status_text = status_result.get("status", "")[:100]
@@ -184,7 +190,7 @@ async def test_git():
 
     # Testa git diff
     print_info("Testando git diff...")
-    diff_result = await git_diff("/home/brunoadsba/Assistente-Digital/assistente")
+    diff_result = await git_diff(str(_repo_root))
     if diff_result.get("success"):
         print_success("Git diff funcionando!")
         diff_text = diff_result.get("diff", "")[:100]

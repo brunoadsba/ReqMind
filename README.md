@@ -86,7 +86,7 @@ O sistema agrega automaticamente as principais notícias das fontes locais de Il
 - Chat com IA (Groq - Llama 3.3 70B); em caso de limite da API (429), fallback para **Kimi K2.5** via NVIDIA (`NVIDIA_API_KEY`) e, se indisponível, **resposta a partir da memória RAG** (ex.: NR-29), com truncamento em fronteira de frase e aviso "(Resumo truncado.)"
 - Perguntas só de data/hora respondidas direto (sem agente, economia de tokens)
 - Mensagem de rate limit com tempo estimado de espera (ex.: "em cerca de 6 minutos") quando não há fallback
-- Memória persistente (RAG); alimentação de normas (ex.: NR-29) via `scripts/feed_nr29_to_memory.py` e `scripts/feed_nr29_oficial.py`
+- Memória persistente (RAG) e memória estruturada via `FactStore`, com **sanitização de dados sensíveis** (senhas/tokens não são armazenados); alimentação de normas (ex.: NR-29) via `scripts/feed_nr29_to_memory.py` e `scripts/feed_nr29_oficial.py`
 - Web search (DuckDuckGo)
 
 ### Análise de Mídia

@@ -5,10 +5,13 @@ Integra FactStore com extração automática de fatos das conversas.
 
 import json
 import re
+import logging
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from workspace.memory.fact_store import FactStore, Fact
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryManager:
@@ -34,10 +37,37 @@ class MemoryManager:
             (r"(?:porta|port) [ée] (\d+)", "port"),
             (r"ip [ée] (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", "ip"),
         ]
+        
+        # Padrões de dados sensíveis que devem ser bloqueados
+        self.sensitive_patterns = [
+            r"(?:senha|password|passwd)\s*[:=]\s*\S+",
+            r"(?:token|api[_-]?key|secret|chave)\s*[:=]\s*\S+",
+            r"(?:senha|password)\s+(?:do|da|é|e)\s+\S+\s*[:=]\s*\S+",
+            r"bearer\s+\S+",
+            r"authorization:\s+\S+",
+        ]
+    
+    def _contains_sensitive_data(self, content: str) -> bool:
+        """Verifica se o conteúdo contém dados sensíveis que não devem ser armazenados"""
+        content_lower = content.lower()
+        for pattern in self.sensitive_patterns:
+            if re.search(pattern, content_lower, re.IGNORECASE):
+                return True
+        return False
     
     def add_fact(self, content: str, source: str = None, tags: List[str] = None, 
-                 auto_extract: bool = True) -> str:
-        """Adiciona um fato, opcionalmente extraindo metadados"""
+                 auto_extract: bool = True) -> Optional[str]:
+        """Adiciona um fato, opcionalmente extraindo metadados
+        
+        Retorna None se o conteúdo contiver dados sensíveis (não armazena).
+        """
+        # Sanitização: bloqueia dados sensíveis
+        if self._contains_sensitive_data(content):
+            logger.warning(
+                "memoria_bloqueada_dados_sensiveis source=%s len=%d",
+                source or "unknown", len(content)
+            )
+            return None
         
         # Extrai tags automaticamente se necessario
         if auto_extract and not tags:
@@ -70,7 +100,10 @@ class MemoryManager:
         return tags or ["general"]
     
     def extract_facts_from_message(self, message: str, context: str = None) -> List[str]:
-        """Extrai fatos de uma mensagem automaticamente"""
+        """Extrai fatos de uma mensagem automaticamente
+        
+        Ignora automaticamente fatos que contenham dados sensíveis.
+        """
         extracted_facts = []
         
         for pattern, tag in self.fact_patterns:
@@ -83,7 +116,9 @@ class MemoryManager:
                         source=context or "auto_extract",
                         tags=[tag, "auto"]
                     )
-                    extracted_facts.append(fact_id)
+                    # add_fact retorna None se contiver dados sensíveis
+                    if fact_id:
+                        extracted_facts.append(fact_id)
         
         return extracted_facts
     
