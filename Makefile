@@ -1,23 +1,38 @@
 # Makefile - alvos padrão para desenvolvimento
 # Uso: make install, make test, make lint
 
-.PHONY: install test lint test-sync clean help
+.PHONY: install test test-all test-sync lint clean help start stop status instancias
 
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  make install   - Instala dependências (pip -r requirements.txt)"
-	@echo "  make test     - Roda todos os testes (pytest)"
-	@echo "  make test-sync - Roda apenas testes síncronos (evita segfault em alguns ambientes)"
+	@echo "  make install    - Instala dependências (pip -r requirements.txt)"
+	@echo "  make start     - Inicia o bot Telegram (scripts/start.sh)"
+	@echo "  make stop      - Encerra o bot Telegram (scripts/stop.sh)"
+	@echo "  make status    - Verifica se o bot está rodando"
+	@echo "  make instancias - Lista todas as instâncias do bot (pgrep -af bot_simple)"
+	@echo "  make test     - Suíte estável (SQLite + segurança; recomendado)"
+	@echo "  make test-all - Todos os testes (pode segfault/erro ctypes no Python do sistema; use venv)"
+	@echo "  make test-sync - Alias para make test"
 	@echo "  make lint     - Verifica código com Ruff"
 	@echo "  make clean    - Remove cache e artefatos"
+
+start:
+	@bash scripts/start.sh
+
+stop:
+	@bash scripts/stop.sh
+
+status:
+	@bash scripts/status.sh
+
+instancias:
+	@pgrep -af "bot_simple" 2>/dev/null | grep -v "pgrep\|grep\|make" || echo "Nenhum processo com 'bot_simple'."
 
 install:
 	pip install -r requirements.txt
 
-test:
-	PYTHONPATH=src python -m pytest tests/ -v --tb=short
-
-test-sync:
+# Suíte estável: evita segfault (logging/asyncio) e ctypes (pandas) em alguns ambientes
+test test-sync:
 	PYTHONPATH=src python -m pytest \
 		tests/test_e2e_simple.py::test_sqlite_store \
 		tests/test_security.py::test_sanitize_youtube_url_valid \
@@ -25,6 +40,10 @@ test-sync:
 		tests/test_security.py::test_validate_path_allowed \
 		tests/test_security.py::test_validate_path_traversal_rejected \
 		-v --tb=short
+
+# Todos os testes (ignora test_bot_funcionalidades por ctypes; testes async podem dar segfault)
+test-all:
+	PYTHONPATH=src python -m pytest tests/ --ignore=tests/test_bot_funcionalidades.py -v --tb=short
 
 lint:
 	ruff check src/ tests/ || true

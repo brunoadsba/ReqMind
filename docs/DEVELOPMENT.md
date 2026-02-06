@@ -37,7 +37,7 @@ pip install -r requirements.txt
 
 # 4. Configure .env
 cp .env.example .env
-# Edite .env com suas API keys (TELEGRAM_TOKEN, GROQ_API_KEY, etc.)
+# Edite .env: TELEGRAM_TOKEN, GROQ_API_KEY (obrigatórios). Opcional: NVIDIA_API_KEY (fallback em 429). Sem NVIDIA, em 429 o bot responde a partir da memória RAG (ex.: NR-29), se houver conteúdo em src/dados/memory.json.
 
 # 5. Teste a instalação
 PYTHONPATH=src python -m pytest tests/ -v

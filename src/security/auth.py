@@ -39,9 +39,9 @@ ADMIN_ID = _get_admin_id()
 
 
 def require_auth(func):
-    """Decorator que requer autenticação"""
+    """Decorator que requer autenticação. Repassa *args e **kwargs ao handler."""
     @wraps(func)
-    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         user = update.effective_user
         user_id = user.id
         allowed = _get_allowed_users()
@@ -56,10 +56,10 @@ def require_auth(func):
                 f"Seu ID: {user_id}"
             )
             return
-        
+
         logger.info(f"✅ Acesso autorizado: {user_id} ({user.username})")
-        return await func(update, context)
-    
+        return await func(update, context, *args, **kwargs)
+
     return wrapper
 
 def is_admin(user_id: int) -> bool:

@@ -4,7 +4,8 @@
 
 set -e
 
-BASE_DIR="/home/brunoadsba/assistente"
+# Diretório base = pasta do projeto (igual ao start.sh)
+BASE_DIR="${BASE_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 PID_FILE="${BASE_DIR}/bot.pid"
 
 RED='\033[0;31m'
@@ -34,10 +35,10 @@ if [ -f "$PID_FILE" ]; then
     fi
     rm -f "$PID_FILE"
 else
-    # Tentar encontrar e matar pelo nome
-    if pgrep -f "bot_simple.py" > /dev/null; then
+    # Padrão: python ou python3 executando bot_simple.py
+    if pgrep -f "python3?.*bot_simple\.py" > /dev/null; then
         echo -e "${YELLOW}📍 Parando todas as instâncias...${NC}"
-        pkill -f "bot_simple.py" || true
+        pkill -f "python3?.*bot_simple\.py" || true
         echo -e "${GREEN}✅ Bot parado${NC}"
     else
         echo -e "${YELLOW}⚠️  Nenhuma instância encontrada${NC}"

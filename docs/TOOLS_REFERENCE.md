@@ -45,6 +45,8 @@ result = await web_search("Python 3.12 features", max_results=3)
 
 ## Memória (RAG)
 
+A memória fica em `src/dados/memory.json` (config.DATA_DIR). Pode ser alimentada por scripts (ex.: `scripts/feed_nr29_to_memory.py`, `scripts/feed_nr29_oficial.py`). Em rate limit (429) da API, o agente usa esta memória para responder quando a pergunta menciona NR/normas.
+
 ### rag_search
 
 **Descrição:** Busca informações na memória pessoal de longo prazo.
@@ -515,27 +517,24 @@ logger.error(f"Erro ao executar: {e}")
 
 ---
 
-## Limitações
+## Limitações (estado atual)
 
 ### Filesystem
-- Sem validação de paths (vulnerabilidade)
-- Sem limites de tamanho
-- Sem whitelist de diretórios
+- Operações via ferramentas usam a infraestrutura atual de segurança (ex.: `SecureFileManager`, sanitização de paths, limites de tamanho).  
+- Ainda assim, as ferramentas são pensadas para **uso pessoal/local**, não para multi‑tenant nem acesso arbitrário de terceiros.
 
 ### Code Tools
-- Busca simples (grep)
-- Sem análise semântica
-- Limitado a extensões específicas
+- Busca baseada em grep (sem análise semântica).
+- Limitado a extensões específicas configuradas na ferramenta.
 
 ### Web Search
-- Máximo 5 resultados
-- Sem cache
-- Dependente de DuckDuckGo
+- Máximo 5 resultados por busca.
+- Sem cache de resultados.
+- Dependente de DuckDuckGo (pode variar por região).
 
 ### RAG
-- Implementação básica
-- Sem embeddings avançados
-- Storage externo
+- Implementação focada em uso pessoal (memória em `memory.json`).
+- Sem embeddings locais avançados; estratégia simples de busca/texto.
 
 ---
 

@@ -2,6 +2,26 @@
 
 Assistente pessoal avançado com múltiplas funcionalidades de IA, análise de mídia e automação.
 
+**Projeto bagunçado?** Abra **[docs/COMECE_AQUI.md](docs/COMECE_AQUI.md)** – um único guia com o que importa.
+
+---
+
+## Guia rápido – Bot (iniciar, parar, status)
+
+**Pré-requisitos:** ter `venv` ativado (ou usar o Python do venv), arquivo `.env` na raiz com pelo menos `TELEGRAM_TOKEN` e `GROQ_API_KEY`. Opcional: `NVIDIA_API_KEY` para fallback quando o Groq atingir o limite (429) — o bot usará Kimi K2.5 via NVIDIA. Copie `.env.example` para `.env` e preencha as chaves.
+
+| Ação | Comando |
+|------|---------|
+| Iniciar o bot | `make start` |
+| Encerrar o bot | `make stop` |
+| Ver se o bot está rodando | `make status` |
+| Rodar testes estáveis | `make test` |
+| Ver todos os comandos make | `make help` |
+
+Iniciar manualmente (sem script): na raiz do projeto, `PYTHONPATH=src ./venv/bin/python src/bot_simple.py`. Use apenas uma instância por token (evite conflito no Telegram).
+
+---
+
 ## 🚀 Quick Start - Notícias Diárias das 07h
 
 ### Como Iniciar o Agendamento
@@ -63,8 +83,10 @@ O sistema agrega automaticamente as principais notícias das fontes locais de Il
 ## 📋 Funcionalidades
 
 ### Chat e IA
-- Chat com IA (Groq - Llama 3.3 70B)
-- Memória persistente (RAG)
+- Chat com IA (Groq - Llama 3.3 70B); em caso de limite da API (429), fallback para **Kimi K2.5** via NVIDIA (`NVIDIA_API_KEY`) e, se indisponível, **resposta a partir da memória RAG** (ex.: NR-29), com truncamento em fronteira de frase e aviso "(Resumo truncado.)"
+- Perguntas só de data/hora respondidas direto (sem agente, economia de tokens)
+- Mensagem de rate limit com tempo estimado de espera (ex.: "em cerca de 6 minutos") quando não há fallback
+- Memória persistente (RAG); alimentação de normas (ex.: NR-29) via `scripts/feed_nr29_to_memory.py` e `scripts/feed_nr29_oficial.py`
 - Web search (DuckDuckGo)
 
 ### Análise de Mídia
@@ -138,7 +160,7 @@ ALLOWED_USERS=123456789,987654321
 ```bash
 export ALLOWED_USERS="6974901522,123456789"
 ```
-3. Reinicie o bot: `./scripts/start_bot_safe.sh`
+3. Reinicie o bot: `make stop` e depois `make start`
 
 ---
 
@@ -153,7 +175,7 @@ assistente/
 ├── .env.example               # Exemplo de variáveis de ambiente
 ├── requirements.txt
 ├── docs/                      # Documentação (ARCHITECTURE, FEATURES, TESTING, security/, etc.)
-├── scripts/                   # start.sh, stop.sh
+├── scripts/                   # start.sh, stop.sh; feed_nr29_to_memory.py, feed_nr29_oficial.py (RAG)
 ├── tests/                     # test_e2e_simple.py, test_security.py, test_bot_completo.py, ...
 └── src/                       # Código-fonte
     ├── bot_simple.py          # Bot principal (~760 linhas)
@@ -168,7 +190,7 @@ assistente/
 ### Padrão do projeto
 - **`.gitignore`** – Ignora `.env`, `venv/`, `__pycache__`, logs e artefatos (nunca commitar secrets).
 - **`pyproject.toml`** – Metadados do projeto, configuração do pytest e Ruff.
-- **`Makefile`** – Comandos: `make install`, `make test-sync`, `make lint`, `make clean`.
+- **`Makefile`** – Comandos: `make start`, `make stop`, `make status`, `make install`, `make test`, `make lint`, `make clean`. Ver: `make help`.
 - **CI (GitHub Actions)** – `.github/workflows/tests.yml` roda testes e lint em push/PR.
 
 ---
@@ -204,6 +226,7 @@ assistente/
   - Web Search, RAG Search, Save Memory ✅
   - Search Code, Filesystem (R/W/List) ✅
   - Git Status/Diff, Tool Registry ✅
+- ✅ **Fallback em rate limit (429):** Kimi K2.5 (NVIDIA) e, na sequência, resposta a partir da memória RAG (ex.: NR-29), com truncamento em fronteira de frase
 - ✅ **Melhorias de segurança v1.1 implementadas**
   - SecureFileManager (auto-cleanup)
   - SafeSubprocessExecutor (comandos seguros)

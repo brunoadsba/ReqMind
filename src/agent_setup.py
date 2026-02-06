@@ -3,7 +3,14 @@
 import os
 import logging
 from groq import Groq
-from elevenlabs import ElevenLabs, VoiceSettings
+
+try:
+    from elevenlabs import ElevenLabs, VoiceSettings
+    ELEVENLABS_AVAILABLE = True
+except ImportError:
+    ElevenLabs = None
+    VoiceSettings = None
+    ELEVENLABS_AVAILABLE = False
 
 from workspace.core.tools import ToolRegistry
 from workspace.core.agent import Agent
@@ -46,7 +53,7 @@ from workspace.tools.extra_tools import (
 logger = logging.getLogger(__name__)
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-elevenlabs_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+elevenlabs_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY")) if ELEVENLABS_AVAILABLE else None
 
 
 def create_agent_no_sandbox():
@@ -71,7 +78,10 @@ def create_agent_no_sandbox():
 
 
 def text_to_speech(text: str) -> bytes:
-    """Converte texto em áudio usando ElevenLabs"""
+    """Converte texto em áudio usando ElevenLabs (opcional)"""
+    if not elevenlabs_client:
+        logger.debug("ElevenLabs não disponível (pacote não instalado ou API key não configurada)")
+        return None
     try:
         # Força português no texto
         text_pt = f"[pt-BR] {text}"

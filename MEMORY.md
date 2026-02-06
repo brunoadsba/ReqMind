@@ -64,6 +64,7 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
    - Loop de tool calling (até 5 iterações)
    - Integração com Groq (com retry)
    - Rate limiting por usuário
+   - Fallback em 429: Kimi K2.5 (NVIDIA) → RAG (memory.json); truncamento em fronteira de frase e "(Resumo truncado.)"
    - Fallback sem tools
 
 6. **src/workspace/core/tools.py**
@@ -96,7 +97,16 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 
 **Impacto:** Código GLM ainda existe mas não é usado.
 
-### 2. Dois Diretórios de Trabalho
+### 2. Memória RAG e alimentação de normas (2026-02-05)
+**O quê:** Memória persistente em `src/dados/memory.json` (workspace.tools.impl.rag_memory). Em 429 (rate limit Groq), se Kimi (NVIDIA) não estiver disponível, o agente busca na memória por termos como "NR-29" ou "NR" e devolve trecho relevante (~1200 caracteres), truncando em fronteira de frase e adicionando "(Resumo truncado.)".
+
+**Scripts de alimentação:**
+- `scripts/feed_nr29_to_memory.py` — injeta resumo estruturado da NR-29 na memória.
+- `scripts/feed_nr29_oficial.py` — lê `scripts/nr29_oficial_dou.txt`, divide por seções (29.1, 29.2, …) e injeta texto oficial. Uso: `PYTHONPATH=src python scripts/feed_nr29_oficial.py [caminho_opcional]`.
+
+**Arquivo de memória:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json`.
+
+### 3. Dois Diretórios de Trabalho
 **Desenvolvimento:** `/home/brunoadsba/Assistente-Digital/assistente`  
 **Execução:** `/home/brunoadsba/clawd/moltbot-setup`
 
@@ -110,7 +120,7 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 
 **TODO:** Consolidar em um único diretório.
 
-### 3. Gerenciamento de Instâncias (2026-01-31)
+### 4. Gerenciamento de Instâncias (2026-01-31)
 **Problema:** Múltiplas instâncias do bot rodando simultaneamente causavam conflitos no Telegram API.
 
 **Sintomas:**
@@ -160,7 +170,7 @@ cd /home/brunoadsba/clawd/moltbot-setup
 - Bot deve rodar apenas via bot_simple.py
 - Apenas 1 instância permitida por token
 
-### 4. Storage Simples (SQLite + JSON)
+### 5. Storage Simples (SQLite + JSON)
 **Por quê:**
 - Uso pessoal (não precisa escalar)
 - Sem dependências externas
@@ -171,7 +181,7 @@ cd /home/brunoadsba/clawd/moltbot-setup
 - Sem backup automático
 - Não escala
 
-### 5. ffmpeg Exit Code 8
+### 6. ffmpeg Exit Code 8
 **Descoberta:** Builds Ubuntu/Debian do ffmpeg retornam exit code 8 com `--version`.
 
 **Por quê:**
@@ -194,7 +204,7 @@ success = (result.returncode == 0 or
 
 **Documentado em:** `docs/INSIGHTS.md`
 
-### 6. Análise de Vídeo Otimizada
+### 7. Análise de Vídeo Otimizada
 **Estratégia:** 3 frames (início, meio, fim) em vez de todos
 
 **Por quê:**

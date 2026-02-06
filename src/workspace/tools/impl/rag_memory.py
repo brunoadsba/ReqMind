@@ -5,15 +5,25 @@ Módulo refatorado para uso como função Python pura
 """
 
 import json
-import os
+import logging
 from datetime import datetime
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
+_DEFAULT_MEMORY = {"knowledge": [], "conversations": [], "documents": []}
+
 
 def get_storage_path() -> Path:
-    """Retorna o caminho do arquivo de memória"""
-    # Usar diretório dentro do projeto (não mais ~/.clawdbot/)
-    storage_dir = Path.home() / ".assistente" / "data"
+    """Retorna o caminho do arquivo de memória (diretório gravável)."""
+    # Preferir diretório do projeto (dados/) para garantir permissão quando o bot roda no projeto
+    try:
+        from config.settings import config
+        storage_dir = config.DATA_DIR
+    except Exception:
+        storage_dir = Path.home() / ".assistente" / "data"
+
+    storage_dir = Path(storage_dir)
     storage_dir.mkdir(parents=True, exist_ok=True)
     return storage_dir / "memory.json"
 
@@ -22,18 +32,21 @@ def load_memory() -> dict:
     """Carrega a memória do arquivo JSON"""
     storage_file = get_storage_path()
 
-    if storage_file.exists():
+    if not storage_file.exists():
+        return _DEFAULT_MEMORY.copy()
+
+    try:
         with open(storage_file, "r", encoding="utf-8") as f:
             return json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning(f"Memória corrompida ou ilegível, usando vazia: {e}")
+        return _DEFAULT_MEMORY.copy()
 
-    return {"knowledge": [], "conversations": [], "documents": []}
 
-
-def save_memory(data: dict) -> None:
+def _write_memory(data: dict) -> None:
     """Salva a memória no arquivo JSON"""
     storage_file = get_storage_path()
     storage_file.parent.mkdir(parents=True, exist_ok=True)
-
     with open(storage_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -50,12 +63,15 @@ def add_knowledge(text: str) -> dict:
     """
     try:
         memory = load_memory()
+        if "knowledge" not in memory:
+            memory["knowledge"] = []
         memory["knowledge"].append(
-            {"text": text, "timestamp": datetime.now().isoformat()}
+            {"text": text.strip(), "timestamp": datetime.now().isoformat()}
         )
-        save_memory(memory)
+        _write_memory(memory)
         return {"success": True, "message": "Informação salva na memória"}
     except Exception as e:
+        logger.exception("Erro ao salvar na memória RAG")
         return {"success": False, "message": str(e)}
 
 

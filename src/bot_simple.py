@@ -24,6 +24,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from workspace.storage.sqlite_store import SQLiteStore
+from workspace.core.agent import Agent
 
 # Imports dos módulos criados
 from agent_setup import create_agent_no_sandbox
@@ -41,6 +42,10 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Oculta logs de requisições HTTP (getUpdates, etc.)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.WARNING)
 
 # Inicializa componentes globais
 agent = create_agent_no_sandbox()
@@ -138,7 +143,7 @@ async def main():
 
     await stop_event.wait()
 
-    # Cleanup
+    # Cleanup: ordem obrigatória (PTB v20) – parar updater antes de stop/shutdown
     logger.info("🧹 Limpando recursos...")
     reminder_task.cancel()
     try:
@@ -146,8 +151,20 @@ async def main():
     except asyncio.CancelledError:
         pass
 
-    await app.stop()
-    await app.shutdown()
+    if app.updater and app.updater.running:
+        try:
+            await asyncio.wait_for(app.updater.stop(), timeout=15.0)
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning("Updater.stop() falhou (continuando shutdown): %s", e)
+
+    try:
+        await app.stop()
+        await app.shutdown()
+    except RuntimeError as e:
+        if "still running" in str(e):
+            logger.warning("Shutdown com updater ainda ativo: %s", e)
+        else:
+            raise
     logger.info("👋 Bot finalizado")
 
 

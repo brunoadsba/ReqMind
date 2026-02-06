@@ -1,34 +1,64 @@
 # 📚 Índice da Documentação - Assistente Digital
 
-Guia completo de navegação pela documentação do Assistente Digital de Bruno.
+Guia de navegação da documentação do Assistente Digital de Bruno, organizado em **documentos ativos** (fonte de verdade atual) e **documentos históricos/legado**.
 
 ---
 
-## Auditoria e Plano de Implementação
+## 1. Documentos Ativos (fonte de verdade)
 
-- **[AUDITORIA_PROJETO.md](AUDITORIA_PROJETO.md)** – Relatório de auditoria técnica (2026-02-05)
-- **[PLANO_IMPLEMENTACAO_AUDITORIA.md](PLANO_IMPLEMENTACAO_AUDITORIA.md)** – Plano de implementação baseado na auditoria
+### 1.1 Visão geral e operação
+
+- **[README.md](../README.md)** – Início rápido do bot (.env, make, estrutura, status).
+- **[COMECE_AQUI.md](COMECE_AQUI.md)** – Atalho operacional para comandos do dia a dia.
+
+### 1.2 Arquitetura, features e desenvolvimento
+
+- **[MEMORY.md](../MEMORY.md)** – Contexto completo, decisões arquiteturais, segurança e roadmap.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** – Arquitetura detalhada do sistema.
+- **[FEATURES.md](FEATURES.md)** – Funcionalidades com exemplos de uso.
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** – Guia de desenvolvimento (estrutura modular, como estender).
+- **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** – Referência das ferramentas (tool calling).
+- **[API_REFERENCE.md](API_REFERENCE.md)** – Modelos de IA, APIs externas, variáveis de ambiente.
+- **[TESTING.md](TESTING.md)** – Guia de testes e validação (E2E, via terminal, notas de segfault).
+
+### 1.3 Segurança
+
+- **[security/SECURITY_INDEX.md](security/SECURITY_INDEX.md)** – Índice de segurança.
+- **[security/SECURITY_IMPLEMENTED.md](security/SECURITY_IMPLEMENTED.md)** – Segurança implementada.
+- **[security/SECURITY_SUMMARY.md](security/SECURITY_SUMMARY.md)** – Resumo executivo.
+- **[security/SECURITY_AUDIT_REPORT.md](security/SECURITY_AUDIT_REPORT.md)** – Relatório detalhado (ver também seção de históricos).
+- **[security/IMPLEMENTATION_PLAN.md](security/IMPLEMENTATION_PLAN.md)** – Plano de implementação.
+
+### 1.4 Status e roadmap
+
+- **[STATUS_ATUAL.md](STATUS_ATUAL.md)** – Snapshot histórico de 2026‑02‑04 com nota de atualização.  
+  - Para o **estado vigente do sistema** e roadmap atual, usar `README.md` e `MEMORY.md` como referência principal.
 
 ---
 
-## 🚀 Início Rápido
+## 2. Auditoria e Plano de Implementação (histórico focado)
+
+- **[AUDITORIA_PROJETO.md](AUDITORIA_PROJETO.md)** – Relatório de auditoria técnica (2026-02-05).
+- **[PLANO_IMPLEMENTACAO_AUDITORIA.md](PLANO_IMPLEMENTACAO_AUDITORIA.md)** – Plano de implementação baseado na auditoria.
+
+---
+
+## 3. 🚀 Início Rápido
 
 ### Para Usuários
 
-**Comece aqui:** [`README.md`](../README.md)
-- Como iniciar o bot
-- Teste E2E
-- Comandos básicos
-- Troubleshooting
+**Projeto bagunçado ou não sabe por onde começar:** **[COMECE_AQUI.md](COMECE_AQUI.md)** – um único guia com comandos do dia a dia e onde achar o resto.
 
-**Depois veja:** [`FEATURES.md`](FEATURES.md)
+Depois:
+- [`README.md`](../README.md) – guia rápido do bot, .env, estrutura.
+- [`FEATURES.md`](FEATURES.md) – funcionalidades e exemplos.
 - Todas as funcionalidades
 - Exemplos de uso
 - Dicas e truques
 
 ---
 
-## 📖 Documentação Principal
+## 4. 📖 Documentação Principal (resumo)
 
 ### 1. README.md - Início Rápido
 **Tamanho:** 12KB | **Tempo de leitura:** 10 min
@@ -82,7 +112,7 @@ Guia completo de navegação pela documentação do Assistente Digital de Bruno.
 - 📄 Análise de documentos (Excel, CSV, Word, OCR)
 - 💻 Ferramentas de desenvolvimento
 - 🌐 Web search
-- 🧠 Memória persistente (RAG)
+- 🧠 Memória persistente (RAG); alimentação NR-29 (scripts feed_nr29_*); fallback RAG em 429
 - ⏰ Sistema de lembretes
 - 🌤️ Ferramentas extras (clima, notícias, gráficos)
 - 📝 Comandos do bot
@@ -194,11 +224,15 @@ Guia completo de navegação pela documentação do Assistente Digital de Bruno.
 
 ### 8. Gerenciamento de instâncias
 
-Se existir `INSTANCE_MANAGEMENT.md` ou documentação equivalente em `scripts/`, consulte para: múltiplas instâncias, scripts start/stop/healthcheck, fluxo de trabalho e troubleshooting de delay.
+Se existir `INSTANCE_MANAGEMENT.md` ou documentação equivalente em `scripts/`, consulte para:
+- múltiplas instâncias,
+- scripts start/stop/healthcheck,
+- fluxo de trabalho,
+- troubleshooting de delay e conflitos de token.
 
 ---
 
-## 🔒 Documentação de Segurança
+## 5. 🔒 Documentação de Segurança
 
 ### 🛡️ Módulos de Segurança Implementados (v1.1 - 2026-01-31)
 
@@ -248,7 +282,7 @@ Plano de implementação de melhorias de segurança.
 
 ---
 
-## 📝 Outros Documentos
+## 6. 📝 Outros Documentos
 
 ### YOUTUBE-ANALYZER-IMPLEMENTADO.md
 Documentação da implementação do analisador de YouTube (legado).
@@ -264,7 +298,7 @@ Script de teste end-to-end.
 
 ---
 
-## 🗺️ Mapa de Navegação
+## 7. 🗺️ Mapa de Navegação
 
 ### Quero começar a usar o bot
 ```
@@ -298,7 +332,7 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 
 ---
 
-## 📊 Estatísticas da Documentação
+## 8. 📊 Estatísticas da Documentação
 
 | Documento | Tamanho | Linhas | Tempo Leitura |
 |-----------|---------|--------|---------------|
@@ -312,7 +346,7 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 
 ---
 
-## 🎯 Documentação por Persona
+## 9. 🎯 Documentação por Persona
 
 ### 👤 Usuário Final
 **Objetivo:** Usar o bot no dia a dia
@@ -362,7 +396,7 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 
 ---
 
-## 🔍 Busca Rápida
+## 10. 🔍 Busca Rápida
 
 ### Conceitos
 
@@ -371,6 +405,8 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 | Agent | ARCHITECTURE.md | Componentes Principais → Agent |
 | Tool Calling | ARCHITECTURE.md | Agent → Fluxo de Execução |
 | Groq Vision | API_REFERENCE.md | Modelos de IA → Vision |
+| Kimi K2.5 / NVIDIA fallback | API_REFERENCE.md | Modelos de IA → NVIDIA (Kimi K2.5) |
+| Rate limit 429 | API_REFERENCE.md, README.md, FEATURES.md | Groq; fallback Kimi e RAG |
 | YouTube Analyzer | ARCHITECTURE.md | Análise de Mídia → Vídeos do YouTube |
 | RAG | FEATURES.md | Memória Persistente |
 | Lembretes | FEATURES.md | Sistema de Lembretes |
@@ -391,7 +427,7 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 
 ---
 
-## 📞 Suporte
+## 11. 📞 Suporte
 
 ### Problemas Técnicos
 1. Consulte `README.md` → Troubleshooting
@@ -408,7 +444,7 @@ README.md (Troubleshooting) → Logs (tail -f bot.log)
 
 ---
 
-## 🎉 Conclusão
+## 12. 🎉 Conclusão
 
 A documentação do Assistente Digital está completa e organizada para atender diferentes perfis de usuários:
 
@@ -421,6 +457,6 @@ A documentação do Assistente Digital está completa e organizada para atender 
 
 ---
 
-**Última atualização:** 2026-02-05  
-**Versão:** 1.1  
-**Status:** Completo (estrutura `src/`, testes com PYTHONPATH=src, segfault documentado em MEMORY.md)
+**Última atualização:** 2026-02-06  
+**Versão:** 1.3  
+**Status:** Completo. Documentos ativos e históricos explicitados; estado atual do sistema centralizado em `README.md` e `MEMORY.md`.  

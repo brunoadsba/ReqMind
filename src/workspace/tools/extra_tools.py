@@ -1,14 +1,8 @@
 """Ferramentas Extras - OCR, Clima, Notícias, etc"""
 
 import os
-import requests
-import pytesseract
-from PIL import Image
 import io
-import matplotlib.pyplot as plt
-import matplotlib
-
-matplotlib.use("Agg")  # Backend sem GUI
+import requests
 from datetime import datetime, timedelta
 import json
 from pathlib import Path
@@ -21,13 +15,17 @@ def get_data_dir() -> Path:
     return data_dir
 
 
-# 1. OCR - Extrair texto de imagens
+# 1. OCR - Extrair texto de imagens (import tardio para não quebrar o bot se pytesseract/pandas falharem)
 async def ocr_extract(image_path: str) -> dict:
     """Extrai texto de imagem usando Tesseract"""
     try:
+        from PIL import Image
+        import pytesseract
         img = Image.open(image_path)
         text = pytesseract.image_to_string(img, lang="por+eng")
         return {"success": True, "text": text.strip()}
+    except ImportError as e:
+        return {"success": False, "error": f"OCR não disponível (dependências): {e}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -202,6 +200,9 @@ async def create_chart(data: dict, chart_type: str = "bar") -> dict:
     try:
         import tempfile
         import numpy as np
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
 
         labels = data.get("labels", [])
         values = data.get("values", [])

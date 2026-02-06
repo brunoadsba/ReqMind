@@ -42,6 +42,17 @@ class Config:
     GROQ_MODEL_CHAT: str = "llama-3.3-70b-versatile"
     WHISPER_MODEL: str = "whisper-large-v3-turbo"
 
+    # Resposta mais rápida: menos tokens e menos histórico = menor latência
+    @property
+    def GROQ_MAX_TOKENS(self) -> int:
+        """Máximo de tokens na resposta do chat. Menor = mais rápido (ex.: 1024). Padrão 2048."""
+        return int(os.getenv("GROQ_MAX_TOKENS", "2048"))
+
+    @property
+    def CHAT_HISTORY_LIMIT(self) -> int:
+        """Quantidade de mensagens no histórico enviado ao modelo. Menor = mais rápido (ex.: 8). Padrão 10."""
+        return int(os.getenv("CHAT_HISTORY_LIMIT", "10"))
+
     # ElevenLabs
     ELEVENLABS_VOICE_ID: str = "ErXwobaYiN019PkySvjV"  # Antoni - voz masculina
     ELEVENLABS_MODEL: str = "eleven_multilingual_v2"
@@ -50,7 +61,11 @@ class Config:
     MAX_FILE_SIZE_MB: int = 50
     MAX_VIDEO_DURATION_MIN: int = 10
     REQUEST_TIMEOUT: float = 30.0
-    MAX_ITERATIONS: int = 5  # Máximo de iterações do agent
+
+    @property
+    def MAX_ITERATIONS(self) -> int:
+        """Máximo de iterações do agent (segurança contra loop infinito). Padrão 100; defina MAX_ITERATIONS no .env para alterar."""
+        return int(os.getenv("MAX_ITERATIONS", "100"))
 
     # Rate Limiting
     RATE_LIMIT_MESSAGES: int = 20  # mensagens por minuto

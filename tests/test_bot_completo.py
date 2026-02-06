@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-Teste Abrangente das Funcionalidades do Bot via Terminal
-Executar com: cd /home/brunoadsba/clawd/moltbot-setup && source venv311/bin/activate && python3 /home/brunoadsba/Assistente-Digital/assistente/tests/test_bot_completo.py
+Teste Abrangente das Funcionalidades do Bot via Terminal.
+Requer PYTHONPATH=src (ou path do projeto no path). Ex.: PYTHONPATH=src pytest tests/test_bot_completo.py
 """
 
 import asyncio
 import sys
 import os
+from pathlib import Path
 from datetime import datetime, timedelta
 
-sys.path.insert(0, "/home/brunoadsba/Assistente-Digital/assistente")
+# Usa src do projeto onde este teste está (evita path fixo de outro diretório)
+_src = Path(__file__).resolve().parent.parent / "src"
+if _src.exists() and str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
 
 from workspace.tools.web_search import web_search
 from workspace.tools.rag_tools import rag_search, save_memory

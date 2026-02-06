@@ -42,8 +42,11 @@ O Assistente Digital é um bot Telegram avançado construído com arquitetura mo
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  Groq Llama 3.3 70B (versatile)                      │   │
 │  │  • Tool calling automático                           │   │
-│  │  • Iterações até 5x                                  │   │
-│  │  • Fallback sem tools                                │   │
+│  │  • Fallback Kimi K2.5 (NVIDIA) em 429 (timeout 20s) │   │
+│  │  • Fallback RAG em 429 (memória, ex. NR-29)         │   │
+│  │  • Fallback sem tools em erro 400                   │   │
+│  │  • Sanitização de tool call em texto (save_memory)  │   │
+│  │  • Resposta direta para data/hora (handler)         │   │
 │  └──────────────────────────────────────────────────────┘   │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -70,12 +73,13 @@ O Assistente Digital é um bot Telegram avançado construído com arquitetura mo
 │                                                               │
 │  🤖 AI Models             📧 Notifications                    │
 │  • Groq (Chat/Vision)     • Email (SMTP)                      │
-│  • ElevenLabs (TTS)       • Telegram                          │
+│  • NVIDIA Kimi K2.5 (429) • Telegram                          │
+│  • RAG (memory.json) 429  • ElevenLabs (TTS)                  │
 │                                                               │
 │  🔧 Tools                 💾 Storage                          │
 │  • ffmpeg                 • SQLite (histórico)                │
-│  • yt-dlp                 • JSON (lembretes)                  │
-│  • tesseract (OCR)        • Filesystem                        │
+│  • yt-dlp                 • memory.json (RAG, ex. NR-29)     │
+│  • tesseract (OCR)        • JSON (lembretes), Filesystem       │
 └─────────────────────────────────────────────────────────────┘
 ```
 

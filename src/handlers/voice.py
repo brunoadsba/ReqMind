@@ -26,6 +26,8 @@ async def handle_voice(
 
     await update.message.chat.send_action("typing")
 
+    chat_id = update.effective_chat.id
+
     try:
         # Download do áudio
         voice = update.message.voice
@@ -39,14 +41,12 @@ async def handle_voice(
                 file=audio_file, model="whisper-large-v3-turbo", response_format="text"
             )
 
-        # Salva transcrição
-        store.add_message("user", f"[ÁUDIO] {transcription}")
+        store.add_message("user", f"[ÁUDIO] {transcription}", chat_id=chat_id)
 
-        # Processa com o agente
-        history = store.get_history(limit=10)
+        history = store.get_history(limit=10, chat_id=chat_id)
         response = await agent.run(transcription, history)
 
-        store.add_message("assistant", response)
+        store.add_message("assistant", response, chat_id=chat_id)
 
         # Responde com transcrição + resposta
         await update.message.reply_text(

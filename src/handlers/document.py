@@ -25,6 +25,8 @@ async def handle_document(
 
     await update.message.chat.send_action("typing")
 
+    chat_id = update.effective_chat.id
+
     try:
         document = update.message.document
         file_name = document.file_name
@@ -111,8 +113,8 @@ Use formatação clara com emojis e organize em seções."""
             response = await agent.run(prompt, history)
 
             await update.message.reply_text(response[:4000])
-            store.add_message("user", f"[EXCEL] {file_name}")
-            store.add_message("assistant", response)
+            store.add_message("user", f"[EXCEL] {file_name}", chat_id=chat_id)
+            store.add_message("assistant", response, chat_id=chat_id)
 
         elif file_name.endswith(".csv"):
             # CSV
@@ -166,8 +168,8 @@ Use formatação clara com emojis."""
 
             response = await agent.run(prompt, [])
             await update.message.reply_text(response[:4000])
-            store.add_message("user", f"[CSV] {file_name}")
-            store.add_message("assistant", response)
+            store.add_message("user", f"[CSV] {file_name}", chat_id=chat_id)
+            store.add_message("assistant", response, chat_id=chat_id)
 
         elif file_name.endswith(".docx"):
             # Word
@@ -184,7 +186,7 @@ Use formatação clara com emojis."""
             preview += f"**Conteúdo:**\n{text[:3500]}"
 
             await update.message.reply_text(preview[:4000])
-            store.add_message("user", f"[WORD] {file_name}: {len(text)} caracteres")
+            store.add_message("user", f"[WORD] {file_name}: {len(text)} caracteres", chat_id=chat_id)
 
         elif file_name.endswith(".md"):
             # Markdown
@@ -196,7 +198,7 @@ Use formatação clara com emojis."""
             preview += f"**Conteúdo:**\n{text[:3500]}"
 
             await update.message.reply_text(preview[:4000])
-            store.add_message("user", f"[MARKDOWN] {file_name}")
+            store.add_message("user", f"[MARKDOWN] {file_name}", chat_id=chat_id)
 
         elif mime_type and mime_type.startswith("image/"):
             # Imagem - OCR

@@ -4,8 +4,8 @@
 
 set -e
 
-# Diretório base
-BASE_DIR="/home/brunoadsba/assistente"
+# Diretório base = pasta do projeto (onde está o script/../)
+BASE_DIR="${BASE_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$BASE_DIR"
 
 # Cores para output
@@ -37,20 +37,19 @@ fi
 mkdir -p data
 mkdir -p tmp
 
-# Verificar se há instância rodando
-if pgrep -f "bot_simple.py" > /dev/null; then
+# Verificar se há instância rodando (python ou python3 + bot_simple.py)
+if pgrep -f "python3?.*bot_simple\.py" > /dev/null; then
     echo -e "${YELLOW}⚠️  Bot já está rodando. Parando instância anterior...${NC}"
-    pkill -f "bot_simple.py" || true
+    pkill -f "python3?.*bot_simple\.py" || true
     sleep 2
 fi
 
 echo -e "${GREEN}✅ Configuração OK!${NC}"
 echo -e "${YELLOW}🚀 Iniciando bot...${NC}"
 
-# Iniciar o bot
+# Iniciar o bot com o Python do venv (evita ctypes/pandas do sistema)
 export PYTHONPATH="${BASE_DIR}/src:${PYTHONPATH}"
-cd src
-python bot_simple.py &
+"${BASE_DIR}/venv/bin/python" "${BASE_DIR}/src/bot_simple.py" &
 PID=$!
 
 # Salvar PID

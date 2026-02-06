@@ -71,6 +71,10 @@ response = client.chat.completions.create(
 )
 ```
 
+**Comportamento no bot:**
+- Se a API retornar **429 (rate limit)**, o bot tenta (1) **Kimi K2.5** via NVIDIA (se `NVIDIA_API_KEY` estiver definida); (2) se não houver chave ou Kimi falhar, **resposta a partir da memória RAG** (busca por "NR-29" ou "NR" na pergunta; truncamento em fronteira de frase, aviso "(Resumo truncado.)"); (3) sem resultado RAG, devolve mensagem com tempo estimado (ex.: "Tente novamente em cerca de 6 minutos").
+- Erros de tool calling (400) disparam nova chamada sem ferramentas antes de falhar.
+
 ---
 
 #### Vision (Llama 4 Scout 17B)
@@ -127,6 +131,32 @@ response = client.chat.completions.create(
     model="meta-llama/llama-4-scout-17b-16e-instruct",
     messages=[{"role": "user", "content": content}]
 )
+```
+
+---
+
+#### NVIDIA (Kimi K2.5) – Fallback em 429
+
+**Base URL:** `https://integrate.api.nvidia.com/v1/chat/completions`
+
+**Modelo:** `moonshotai/kimi-k2.5`
+
+**Uso no bot:** Quando o Groq retorna 429, o agent chama a API NVIDIA com o mesmo contexto (timeout **20 s** para não bloquear o usuário se a API estiver lenta). Resposta apenas em texto (sem tool calling). Requer `NVIDIA_API_KEY` no `.env`.
+
+**Exemplo (fora do bot):**
+```python
+import requests, os
+url = "https://integrate.api.nvidia.com/v1/chat/completions"
+r = requests.post(url, headers={
+    "Authorization": f"Bearer {os.getenv('NVIDIA_API_KEY')}",
+    "Content-Type": "application/json"
+}, json={
+    "model": "moonshotai/kimi-k2.5",
+    "messages": [{"role": "user", "content": "Olá!"}],
+    "max_tokens": 4096, "temperature": 0.7, "stream": False,
+    "chat_template_kwargs": {"thinking": True}
+}, timeout=20)
+print(r.json()["choices"][0]["message"]["content"])
 ```
 
 ---
@@ -341,6 +371,9 @@ TELEGRAM_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 # Groq (OBRIGATÓRIO)
 GROQ_API_KEY=gsk_abcdefghijklmnopqrstuvwxyz1234567890
 
+# NVIDIA – Kimi K2.5 (OPCIONAL – fallback quando Groq retorna 429)
+NVIDIA_API_KEY=nvapi-...
+
 # ElevenLabs (OPCIONAL - TTS)
 ELEVENLABS_API_KEY=sk_abcdefghijklmnopqrstuvwxyz1234567890
 
@@ -370,6 +403,11 @@ OPENROUTER_API_KEY=...
 3. Vá em "API Keys"
 4. Clique em "Create API Key"
 5. Copie a chave
+
+#### NVIDIA (Kimi K2.5 – fallback)
+1. Acesse: https://build.nvidia.com/ ou console da NVIDIA
+2. Crie/obtenha uma API key para NIM (NVIDIA AI)
+3. No `.env`: `NVIDIA_API_KEY=nvapi-...`
 
 #### ElevenLabs
 1. Acesse: https://elevenlabs.io

@@ -48,7 +48,7 @@ class SecureFileManager:
     def __init__(self, base_temp_dir: str = "/tmp/moltbot_secure"):
         self.base_path = Path(base_temp_dir)
         self.base_path.mkdir(parents=True, exist_ok=True, mode=0o700)
-        logger.info(f"SecureFileManager inicializado em {self.base_path}")
+        # Evita logging em __init__ para não disparar segfault em alguns ambientes ao importar
 
     def sanitize_filename(self, filename: str) -> str:
         """Remove path traversal e caracteres perigosos"""
@@ -175,5 +175,5 @@ class SecureFileManager:
             logger.error(f"Erro ao limpar arquivos antigos: {e}")
 
 
-# Instância global
+# Instância global (sem log em __init__ para evitar segfault ao importar em alguns ambientes)
 secure_files = SecureFileManager()

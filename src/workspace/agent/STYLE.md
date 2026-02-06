@@ -1,5 +1,8 @@
 # STYLE.md - Guia de Estilo e Formatacao
 
+## Perguntas Simples (data, hora)
+Para perguntas que pedem APENAS data e/ou hora (ex: "que data e hoje?", "que horas sao?"): responder SOMENTE com a data e o horario atuais, em uma ou duas frases. Nao chamar ferramentas de clima, git, arquivos ou noticias. Nao incluir lembretes, clima ou erros de outras ferramentas na resposta.
+
 ## Estrutura de Resposta Padrao
 
 ### 1. Resumo Executivo (1-2 frases)

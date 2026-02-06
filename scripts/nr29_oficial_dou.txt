@@ -1,0 +1,70 @@
+Este texto não substitui o publicado no DOU
+NR 29 - SEGURANÇA E SAÚDE NO TRABALHO PORTUÁRIO
+Publicação D.O.U.
+Portaria SSST N.º 53, de 17 de dezembro de 1997 06/07/78
+Alterações/Atualizações D.O.U.
+Portaria SSST nº 18, de 30 de março de 1998 03/09/98
+Portaria SIT nº 18, de 12 de julho de 2002 13/07/02
+Portaria SIT nº 158, de 10 de abril de 2006 17/04/06
+Portaria MTE nº 1.895, de 09 de dezembro de 2013 12/12/13
+Portaria MTE nº 1.080, de 16 de julho de 2014 17/07/14
+Portaria MTP nº 671, de 30 de março de 2022 01/04/22
+Portaria MTP n.º 4.219, de 20 de dezembro de 2022 22/12/22
+(Redação dada pela Portaria MTP nº 671, de 30 de março de 2022)
+SUMÁRIO
+29.1 Objetivo
+29.2 Campo de aplicação
+29.3 Competências e responsabilidades
+29.4 Programa de Gerenciamento de Riscos - PGR
+29.5 Serviço Especializado em Segurança e Saúde do Trabalhador Portuário - SESSTP
+29.6 Serviços Especializados em Engenharia de Segurança e em Medicina do Trabalho – SESMT
+29.7 Comissão de Prevenção de Acidentes no Trabalho Portuário - CPATP
+29.8 Operações de atracação, desatracação e manobras de embarcações
+29.9 Acesso a embarcações atracadas e fundeadas
+29.10 Operação em conveses
+29.11 Porões
+29.12 Trabalho em espaços confinados
+29.13 Máquinas, equipamentos e acessórios de estivagem
+29.14 Equipamentos de guindar de bordo e acessórios de estivagem
+29.15 Lingamento e deslingamento de cargas
+29.16 Operações com contêineres
+29.17 Operações com granéis secos
+29.18 Transporte, movimentação, armazenagem e manuseio
+29.19 Segurança em armazéns e silos
+29.20 Segurança nos trabalhos de limpeza e manutenção
+29.21 Segurança nos serviços do vigia de portaló
+29.22 Iluminação dos locais de trabalho
+29.23 Transporte de trabalhadores por via aquática
+29.24 Locais frigorificados
+29.25 Condições sanitárias e de conforto nos locais de trabalho
+29.26 Primeiros socorros e outras providências
+29.27 Operações com cargas perigosas
+29.28 Plano de Controle de Emergência - PCE
+29.29 Plano de Ajuda Mútua - PAM
+ANEXO I - Dimensionamento do SESSTP
+ANEXO II - Dimensionamento da CPATP
+ANEXO III - Regime de tempo de trabalho com tempo de recuperação térmica fora do ambiente frio
+ANEXO IV - Cargas perigosas
+ANEXO V - Segregação de cargas perigosas
+Glossário
+
+29.1 Objetivo
+29.1.1 Esta Norma Regulamentadora - NR tem por objetivo estabelecer as medidas de prevenção em
+Segurança e Saúde no trabalho portuário e as diretrizes para a implementação do gerenciamento dos
+riscos ocupacionais nos ambientes de trabalho alcançados por esta NR.
+29.2 Campo de aplicação
+29.2.1 As disposições contidas nesta NR aplicam-se ao trabalho portuário, tanto a bordo como em
+terra, assim como às demais atividades nos portos e nas instalações portuárias, públicas ou privadas,
+situadas dentro ou fora da área do porto organizado, e nos terminais retroportuários.
+29.2.1.1 Aplicam-se aos terminais retroportuários, além do disposto nas demais normas
+regulamentadoras, os seguintes itens desta NR:
+a) 29.15 Lingamento e deslingamento de cargas;
+b) 29.16 Operações com contêineres;
+c) 29.17 Operações com granéis secos;
+d) 29.18 Transporte, movimentação, armazenagem e manuseio;
+e) 29.19 Segurança em armazéns e silos;
+f) 29.22 Iluminação dos locais de trabalho;
+g) 29.24 Locais frigorificados;
+h) 29.25 Condições sanitárias e de conforto nos locais de trabalho;
+i) 29.26 Primeiros socorros e outras providências; e
+j) 29.27 Operações com cargas perigosas, excetuando-se o item 29.27.36 e seu subitem.

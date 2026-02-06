@@ -1,11 +1,9 @@
 """Comandos do bot Telegram (/start, /clear, /status)"""
 
-import os
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config.settings import config
 from workspace.core.agent import Agent
 from workspace.storage.sqlite_store import SQLiteStore
 
@@ -31,14 +29,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def make_clear_handler(store: SQLiteStore):
-    """Factory para criar handler de /clear com store injetado"""
+    """Factory para criar handler de /clear: limpa apenas o histórico deste chat."""
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        store.clear_history()
-        # Também limpa o arquivo do banco
-        db_file = str(config.DATABASE_PATH)
-        if os.path.exists(db_file):
-            os.remove(db_file)
-        await update.message.reply_text("✅ Histórico limpo!")
+        chat_id = update.effective_chat.id
+        store.clear_history(chat_id=chat_id)
+        await update.message.reply_text("✅ Histórico deste chat limpo!")
     return handler
 
 

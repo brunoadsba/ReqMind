@@ -1,10 +1,14 @@
 """Handler para mensagens de texto"""
 
 import os
+import re
 import logging
 import glob
+from datetime import datetime
 from telegram import Update
 from telegram.ext import ContextTypes
+
+import pytz
 
 from config.settings import config
 from security.auth import require_auth
@@ -13,6 +17,27 @@ from workspace.storage.sqlite_store import SQLiteStore
 from agent_setup import text_to_speech, groq_client
 
 logger = logging.getLogger(__name__)
+
+# Perguntas que pedem apenas data/hora: responder direto, sem chamar o agente
+_DATETIME_PATTERN = re.compile(
+    r"^(que\s+)?(data|hora|horas?|dia)\s+(é\s+hoje|são|atual)?|"
+    r"data\s+(e|de)\s+hoje|horário\s+atual|que\s+horas?\s+são\s*\??\s*$",
+    re.IGNORECASE,
+)
+
+
+def _is_simple_datetime_question(text: str) -> bool:
+    """True se a mensagem pede apenas data e/ou hora (máx. 60 caracteres)."""
+    t = (text or "").strip()
+    if len(t) > 60:
+        return False
+    return bool(_DATETIME_PATTERN.search(t))
+
+
+def _format_datetime_reply() -> str:
+    tz = pytz.timezone("America/Sao_Paulo")
+    now = datetime.now(tz)
+    return now.strftime("Hoje é %d/%m/%Y e são %H:%M.").replace(" 0", " ")
 
 
 @require_auth
@@ -60,13 +85,24 @@ async def handle_message(
             await update.message.reply_text("Ocorreu um erro ao analisar o vídeo. Tente novamente.")
             return
 
+    chat_id = update.effective_chat.id
+
+    # Perguntas só de data/hora: resposta direta, sem agente (economiza tokens e evita tools)
+    if _is_simple_datetime_question(user_message):
+        reply = _format_datetime_reply()
+        store.add_message("user", user_message, chat_id=chat_id)
+        store.add_message("assistant", reply, chat_id=chat_id)
+        await update.message.reply_text(reply)
+        return
+
     await update.message.chat.send_action("typing")
 
     try:
-        # Usa histórico vazio para evitar erros
-        history = []
+        history = store.get_history(limit=config.CHAT_HISTORY_LIMIT, chat_id=chat_id)
         response = await agent.run(user_message, history, user_id=update.effective_user.id)
 
+        store.add_message("user", user_message, chat_id=chat_id)
+        store.add_message("assistant", response, chat_id=chat_id)
         store.log_metric("message_processed", {"length": len(user_message)})
 
         # Verifica se há imagem de gráfico para enviar

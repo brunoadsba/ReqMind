@@ -1,13 +1,22 @@
 # Status Atual do Projeto - Assistente Digital
 
-Data: 2026-02-04 (Fim do dia)
+> **IMPORTANTE – Documento histórico**  
+> Este arquivo é um snapshot de trabalho do dia **2026-02-04** (com uma nota de atualização em 2026-02-05).  
+> O **estado atual e consolidado** do sistema, segurança e roadmap deve ser consultado em:
+> - `README.md` (visão de produto e operação)
+> - `MEMORY.md` (decisões, arquitetura, segurança, testes, roadmap)
+> - `docs/ARCHITECTURE.md`, `docs/FEATURES.md`, `docs/API_REFERENCE.md`
+
+Data do snapshot: 2026-02-04 (Fim do dia)  
 Responsável: Claude (Gemini CLI-Cursor Mode)
+
+**Atualização (2026-02-05, consolidada nos docs principais):** O agent foi corrigido e está em uso. Foram adicionados: fallback Kimi K2.5 (NVIDIA) em 429 com timeout de 20 s; **fallback RAG em 429** (quando Kimi indisponível, resposta a partir da memória, ex.: NR-29, com truncamento em fronteira de frase e "(Resumo truncado.)"); atalho para perguntas de data/hora; mensagem de rate limit com tempo estimado; tratamento de erro de tool calling (fallback sem tools); sanitização de tool call em texto; encerramento correto do bot (`make stop` com PTB v20). **Alimentação de normas:** scripts `feed_nr29_to_memory.py` e `feed_nr29_oficial.py` injetam resumo e texto oficial da NR-29 em `src/dados/memory.json`. Ver `README.md`, `API_REFERENCE.md` e `FEATURES.md` para detalhes atualizados.
 
 ---
 
 ## Resumo Executivo
 
-Arquitetura de 3 camadas **parcialmente implementada**. A estrutura está toda criada, mas há um **erro de sintaxe no agent.py** que impede a execução do código.
+Arquitetura de 3 camadas **parcialmente implementada** (segundo o estado em 2026-02-04). A estrutura estava criada; o agent foi posteriormente corrigido e ampliado (ver nota acima).
 
 ---
 

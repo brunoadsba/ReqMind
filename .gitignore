@@ -65,6 +65,7 @@ dmypy.json
 bot.log
 logs/
 data/
+dados/
 *.db
 *.sqlite
 *.sqlite3

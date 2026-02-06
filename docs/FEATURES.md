@@ -42,7 +42,7 @@
 ## 1. Chat Inteligente
 
 ### Descrição
-Conversação natural com IA usando Groq Llama 3.3 70B, com capacidade de usar ferramentas automaticamente.
+Conversação natural com IA usando Groq Llama 3.3 70B, com capacidade de usar ferramentas automaticamente. Quando o Groq retorna limite de uso (429), o bot tenta **Kimi K2.5** via API NVIDIA (requer `NVIDIA_API_KEY` no `.env`); se não houver chave ou o Kimi falhar, responde a partir da **memória RAG** (ex.: NR-29), com truncamento em fronteira de frase e aviso "(Resumo truncado.)". Perguntas que pedem apenas data/hora são respondidas direto, sem chamar o agente.
 
 ### Como Usar
 Simplesmente envie uma mensagem de texto no Telegram.
@@ -74,10 +74,16 @@ Bot: [usa tool: web_search("Python 3.12")]
 - ✅ Tool calling automático (15 ferramentas)
 - ✅ Raciocínio complexo
 - ✅ Múltiplas iterações (até 5)
+- ✅ Fallback para Kimi K2.5 (NVIDIA) quando Groq retorna 429 (timeout 20 s)
+- ✅ Fallback RAG em 429: se Kimi indisponível, resposta a partir da memória (ex.: NR-29), truncada em fronteira de frase com "(Resumo truncado.)"
+- ✅ Resposta direta para perguntas só de data/hora (sem agente)
+- ✅ Mensagem de rate limit com tempo estimado (ex.: "em cerca de 6 minutos") quando não há resultado RAG
+- ✅ Sanitização de tool call em texto: se o modelo devolver markup de chamada (ex.: save_memory) no conteúdo, o agent remove e executa a ferramenta, evitando vazamento de tokens ao usuário
 
 ### Limitações
 - ⚠️ Histórico limitado (últimas 10 mensagens)
 - ⚠️ Sem memória entre sessões (use save_memory)
+- ⚠️ Fallback Kimi K2.5 não usa ferramentas (resposta apenas em texto); timeout de 20 s para falhar rápido se a API não responder
 
 ---
 
@@ -639,9 +645,25 @@ Bot: [busca na memória]
 ```
 
 ### Capacidades
-- ✅ Busca semântica
+- ✅ Busca por substring na memória (`memory.json` em `src/dados/`)
 - ✅ Memória persistente entre sessões
 - ✅ Contexto de longo prazo
+
+### 9.3 Alimentação de normas (ex.: NR-29)
+
+A memória RAG pode ser alimentada com textos longos (ex.: resumo ou texto oficial da NR-29) para que o bot responda mesmo quando a API está em rate limit (429).
+
+**Scripts**
+- `scripts/feed_nr29_to_memory.py` — injeta resumo estruturado da NR-29 na memória.
+- `scripts/feed_nr29_oficial.py` — lê `scripts/nr29_oficial_dou.txt`, divide por seções (29.1, 29.2, …) e injeta o texto oficial na memória.
+
+**Uso**
+```bash
+PYTHONPATH=src python scripts/feed_nr29_to_memory.py
+PYTHONPATH=src python scripts/feed_nr29_oficial.py [caminho_opcional.txt]
+```
+
+**Fallback em 429:** Se a API Groq retornar 429 e o Kimi (NVIDIA) não estiver disponível, o agente busca na memória por termos como "NR-29" ou "NR" e devolve o trecho encontrado (até ~1200 caracteres), truncando em fronteira de frase e adicionando "(Resumo truncado.)".
 
 ---
 
@@ -919,6 +941,9 @@ Você: [envia 21 mensagens em 1 minuto]
 Bot: ⏱️ Muitas requisições. Aguarde um momento.
      Requisições restantes: 0
 ```
+
+**Rate limit da API (429)**  
+Quando o Groq retorna 429: (1) tenta Kimi K2.5 (NVIDIA); (2) se não houver chave ou Kimi falhar, tenta responder a partir da memória RAG (ex.: NR-29), com truncamento em fronteira de frase; (3) caso não haja resultado na memória, devolve mensagem com tempo estimado (ex.: "Tente novamente em cerca de 6 minutos").
 
 **Benefícios**
 - ✅ Previne spam
