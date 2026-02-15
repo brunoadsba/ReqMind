@@ -12,15 +12,16 @@
 - **Bot:** @br_bruno_bot
 - **User ID Autorizado:** 6974901522
 - **Status:** ✅ Produção (uso pessoal)
-- **Versão:** 1.1
-- **Última atualização:** 2026-02-05
+- **Versão:** 1.4
+- **Última atualização:** 2026-02-15
 
 ### Stack Tecnológico
 - **Linguagem:** Python 3.12.3
 - **Framework Bot:** python-telegram-bot 20.7
 - **IA Principal:** Groq (Llama 3.3 70B, Llama 4 Scout, Whisper)
+- **Memória:** HippocampAI Lite (ChromaDB + NetworkX)
 - **TTS:** ElevenLabs (opcional)
-- **Storage:** SQLite + JSON
+- **Storage:** SQLite + JSON + ChromaDB
 - **Mídia:** ffmpeg, yt-dlp, tesseract
 
 ---
@@ -151,7 +152,17 @@ Usuário: "o que diz a NR-18 construção civil"
 
 **Plano de implementação:** Ver `PLANO_NRS_HIBRIDO.md`
 
-**Arquivo de memória:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json`.
+### 4. HippocampAI Lite (Memória de Longo Prazo - v1.4)
+**O quê:** Sistema de memória híbrida integrado ao `MemoryManager`.
+- **Vector Store (ChromaDB):** Armazena embeddings de interações e fatos (memória episódica/semântica).
+- **Graph Store (NetworkX):** Armazena relações entre entidades (Grafo de Conhecimento).
+- **Fluxo:**
+    - Antes de responder: `hippocampus.recall(query)` injeta contexto relevante.
+    - Depois de responder: `hippocampus.remember(interaction)` salva a interação.
+- **Localização:** `src/dados/hippocampus/` (persistência local).
+- **Vantagem:** Permite que o bot lembre de fatos complexos e preferências por longo prazo sem alucinar, usando contexto real.
+
+**Arquivo de memória legado:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json` (ainda mantido para compatibilidade RAG simples).
 
 ### 3. Diretório de Trabalho Oficial
 **Desenvolvimento e Execução (atual):** `/home/brunoadsba/ReqMind/assistente`
@@ -772,7 +783,8 @@ OPENROUTER_API_KEY=...
 
 ## 🔮 Roadmap Futuro
 
-### ✅ Concluído (2026-01-31)
+### ✅ Concluído (2026-02-15)
+- [x] **HippocampAI Lite:** Memória de longo prazo com ChromaDB e NetworkX
 - [x] **Melhorias de Segurança:** SecureFileManager, SafeSubprocessExecutor, Rate Limiting
 - [x] **Estabilidade:** Retry decorators, Config centralizada, Asyncio puro
 - [x] **Remoção de hardcoded paths:** Configuração via env vars

@@ -1,6 +1,6 @@
 # 🚀 Guia de Uso Rápido - Assistente Digital
 
-**Bot:** @br_bruno_bot | **Versão:** 1.2 | **Atualizado:** 2026-02-06
+**Bot:** @br_bruno_bot | **Versão:** 1.4 | **Atualizado:** 2026-02-15
 
 ---
 
@@ -17,6 +17,7 @@
 - "Quais são minhas preferências?"
 - "Lembre que eu gosto de café forte"
 - "Salve na memória: meu cliente principal é a Empresa X"
+> **(Novo)** Agora com *HippocampAI*: O bot conecta fatos dispersos ("Você disse semana passada que gosta de Python...") e usa busca vetorial para entender contexto semântico profundo.
 
 ### ⏰ Lembretes
 - "Lembre daqui a 2 horas: ligar para o suporte"
@@ -152,6 +153,6 @@ make test  # Rodar testes
 
 ---
 
-**Última atualização:** 2026-02-06  
-**Versão:** 1.2  
+**Última atualização:** 2026-02-15  
+**Versão:** 1.4  
 **Mantenedor:** Bruno (user_id: 6974901522)
