@@ -18,3 +18,9 @@ pytz>=2023.3
 pandas>=2.0.0
 openpyxl>=3.1.0
 python-docx>=1.1.0
+
+# HippocampAI Lite
+numpy>=1.26,<2.0
+networkx>=3.2.1
+chromadb>=0.4.22
+sentence-transformers>=2.3.1

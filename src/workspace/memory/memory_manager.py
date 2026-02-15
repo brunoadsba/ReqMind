@@ -10,6 +10,12 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from workspace.memory.fact_store import FactStore, Fact
+try:
+    from features.hippocampus.client import HippocampusClient, MemoryType
+except ImportError:
+    HippocampusClient = None
+    logger.warning("HippocampusClient não disponível (import failed)")
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +33,14 @@ class MemoryManager:
         
         # FactStore
         self.fact_store = FactStore(self.memory_dir)
+
+        # Hippocampus (Lite)
+        self.hippocampus = None
+        if HippocampusClient:
+            try:
+                self.hippocampus = HippocampusClient(str(self.memory_dir / "hippocampus"))
+            except Exception as e:
+                logger.error(f"Falha ao iniciar Hippocampus: {e}")
         
         # Padrões para extração de fatos
         self.fact_patterns = [
@@ -159,13 +173,23 @@ class MemoryManager:
             recent = self.fact_store.get_recent_facts(limit=max_facts)
             results = [(f.content, 0.5) for f in recent]
 
-        if not results:
-            return ""
+        # Busca no Hippocampus (Semântica + Episódica)
+        hippocampus_context = ""
+        if self.hippocampus:
+            try:
+                hippocampus_context = self.hippocampus.recall(user_message, "user_default", top_k=3)
+            except Exception as e:
+                logger.error(f"Erro no recall do Hippocampus: {e}")
 
-        memory_context = "Fatos relevantes:\n"
-        for content, score in results:
-            if score > 0.1:
-                memory_context += f"- {content}\n"
+        memory_context = ""
+        if results:
+            memory_context = "Fatos relevantes:\n"
+            for content, score in results:
+                if score > 0.1:
+                    memory_context += f"- {content}\n"
+
+        if hippocampus_context:
+            memory_context += "\n[Memória Hippocampus]:\n" + hippocampus_context
 
         return memory_context if len(memory_context) > 20 else ""
     
@@ -178,6 +202,20 @@ class MemoryManager:
         if any(keyword in assistant_response.lower() 
                for keyword in ["diretorio", "caminho", "projeto", "configuracao"]):
             self.extract_facts_from_message(assistant_response, "assistant")
+            
+        # Salva no Hippocampus (Episodic Stream)
+        if self.hippocampus:
+            try:
+                # 1. O que o usuário disse
+                self.hippocampus.remember(
+                    content=f"User: {user_message}",
+                    user_id="user_default",
+                    memory_type=MemoryType.EPISODIC
+                )
+                # 2. O que o bot respondeu (opcional, pode ser ruido, mas bom para contexto)
+                # self.hippocampus.remember(f"Assistant: {assistant_response}", "user_default", MemoryType.EPISODIC)
+            except Exception as e:
+                logger.error(f"Erro ao salvar memoria no Hippocampus: {e}")
     
     def get_stats(self) -> Dict:
         """Retorna estatísticas da memória"""

@@ -6,7 +6,8 @@ RUN apt-get update && \
       ffmpeg \
       tesseract-ocr \
       tesseract-ocr-por \
-      libmagic1 && \
+      libmagic1 \
+      build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED=1 \
@@ -19,6 +20,7 @@ WORKDIR /app
 # Dependências Python
 COPY requirements.txt pyproject.toml ./
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
 # Código-fonte

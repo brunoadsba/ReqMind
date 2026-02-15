@@ -70,6 +70,7 @@ start-docker:
 		--name assistente-bot \
 		--env-file .env \
 		-v $$(pwd)/dados:/app/dados \
+		-v $$(pwd)/src:/app/src \
 		assistente-bot
 
 stop-docker:
