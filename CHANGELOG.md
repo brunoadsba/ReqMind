@@ -7,6 +7,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.4.0] - 2026-02-15
+
+### 🧠 HippocampAI (Versão Lite/KISS)
+- **Implementação do Cérebro Híbrido** (`src/features/hippocampus/`):
+  - **Vector Store (ChromaDB)**: Memória semântica e episódica local rápida.
+  - **Graph Store (NetworkX)**: Estrutura para relacionamentos (Grafo de Conhecimento).
+  - **MemoryManager Atualizado**: Integração transparente com o bot ('remember'/'recall').
+  - **KISS & Serverless**: Sem containers pesados (Qdrant/Redis), roda 100% Python/SQLite.
+
+### ✨ Melhorias
+- **Docker Otimizado**: Instalação de PyTorch CPU-only (imagem menor e build mais rápido).
+- **Testes E2E Robustos**: Novo conjunto de testes (`tests/test_e2e_full.py`) validando todo o fluxo de memória e ferramentas.
+
+### 🧪 Testes
+- ✅ **Sucesso Total:** 5/5 cenários complexos de E2E passando (Memória, Arquivos, Busca, Imagem, NRs).
+- ✅ **Integração Docker:** Testes ajustados para rodar perfeitamente dentro do container.
+
+---
+
 ## [1.3.0] - 2026-02-06
 
 ### ⚡ Performance - Otimizações de Velocidade
