@@ -89,3 +89,4 @@ temp/
 # Backups
 *.bak
 *.backup
+\n# Dados de Memória e Execução\nsrc/workspace/memory/hippocampus/\nsrc/workspace/runs/

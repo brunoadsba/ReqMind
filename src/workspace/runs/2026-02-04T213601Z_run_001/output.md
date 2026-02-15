@@ -1,3 +1,0 @@
-# Output
-
-Resposta de teste
