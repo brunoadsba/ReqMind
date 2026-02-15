@@ -70,11 +70,13 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 
 6. **src/workspace/core/tools.py**
    - Registry pattern
-   - 14 ferramentas registradas (web_search, rag_search, save_memory, search_code, read_file, write_file, list_directory, git_status, git_diff, get_weather, get_news, create_reminder, create_chart, generate_image)
+   - 17 ferramentas registradas (incluindo git_clone, git_pull, git_list_repos)
 
 7. **src/workspace/tools/** (vários arquivos)
    - Ferramentas específicas
    - Cada uma retorna dict com success/error
+   - `git_manager.py`: Gerenciamento de repositórios (v1.4.1)
+   - `hippocampus/`: Memória de longo prazo (v1.4)
 
 8. **src/security/** (auth, rate_limiter, sanitizer, file_manager, executor, media_validator)
    - auth: Whitelist de usuários
@@ -161,6 +163,20 @@ Usuário: "o que diz a NR-18 construção civil"
     - Depois de responder: `hippocampus.remember(interaction)` salva a interação.
 - **Localização:** `src/dados/hippocampus/` (persistência local).
 - **Vantagem:** Permite que o bot lembre de fatos complexos e preferências por longo prazo sem alucinar, usando contexto real.
+
+### 5. Kimi AI (Moonshot) + NVIDIA Fallback (v1.4.1)
+**O quê:** Integração robusta com o modelo Kimi 2.5 para contextos longos (até 200k tokens).
+- **Primário:** API oficial da Moonshot AI (`api.moonshot.cn`).
+- **Backup:** API NVIDIA NIM (`integrate.api.nvidia.com`) se a principal falhar (timeout/auth).
+- **Uso:** Fallback automático quando o Groq atinge rate limit (429) ou para tarefas de leitura extensiva.
+
+### 6. Git Read-Only Access (v1.4.1)
+**O quê:** Capacidade de clonar e ler repositórios públicos para análise de código.
+- **Ferramentas:** `git_clone`, `git_pull`, `git_list_repos`.
+- **Segurança:** 
+    - Clone restrito a `src/dados/repos/`.
+    - Operações apenas de leitura (sem push).
+    - Permite que o bot estude codebases externas (ex: SGN).
 
 **Arquivo de memória legado:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json` (ainda mantido para compatibilidade RAG simples).
 
@@ -296,8 +312,13 @@ success = (result.returncode == 0 or
 11. **get_news** - NewsAPI
 12. **create_reminder** - Email + Telegram
 13. **create_chart** - matplotlib
-14. **generate_image** - IA (não configurado)
-15. **analyze_youtube_video** - Análise de vídeo YouTube (frames + transcrição)
+14. **generate_image** - IA
+15. **analyze_youtube_video** - Análise de vídeo YouTube
+
+### Git Externo (v1.4.1)
+16. **git_clone** - Clonar repo público
+17. **git_pull** - Atualizar repo
+18. **git_list_repos** - Listar repos clonados
 
 **Padrão:** Todas retornam `{"success": bool, "data": any}` ou `{"success": bool, "error": str}`
 

@@ -49,6 +49,14 @@ from workspace.tools.extra_tools import (
     CHART_SCHEMA,
     IMAGE_GEN_SCHEMA,
 )
+from workspace.tools.git_manager import (
+    git_clone, 
+    git_pull, 
+    git_list_repos,
+    GIT_CLONE_SCHEMA,
+    GIT_PULL_SCHEMA,
+    GIT_LIST_REPOS_SCHEMA
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +82,12 @@ def create_agent_no_sandbox():
     registry.register("create_reminder", create_reminder, REMINDER_SCHEMA)
     registry.register("create_chart", create_chart, CHART_SCHEMA)
     registry.register("generate_image", generate_image, IMAGE_GEN_SCHEMA)
+    
+    # Ferramentas Git (Gerenciamento de Repos)
+    registry.register("git_clone", git_clone, GIT_CLONE_SCHEMA)
+    registry.register("git_pull", git_pull, GIT_PULL_SCHEMA)
+    registry.register("git_list_repos", git_list_repos, GIT_LIST_REPOS_SCHEMA)
+    
     return Agent(registry)
 
 

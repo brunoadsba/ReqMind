@@ -7,6 +7,24 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.4.1] - 2026-02-15
+
+### 🚀 Novas Funcionalidades
+- **Kimi AI (Moonshot) Oficial + Fallback NVIDIA:**
+  - Suporte à API oficial da Moonshot AI (`api.moonshot.cn`) para melhor performance e contexto (200k+ tokens).
+  - Sistema de failover automático: Se Moonshot falhar (401/Timeout), tenta NVIDIA NIM.
+  - Se NVIDIA falhar, segue para outros fallbacks (GLM, RAG).
+- **Git Read-Only Access:**
+  - Novas ferramentas: `git_clone`, `git_pull`, `git_list_repos`.
+  - Permite clonar repositórios públicos em `src/dados/repos/` para análise de código.
+  - Segurança reforçada: apenas clone/pull (leitura), sem push.
+
+### 🛡️ Segurança
+- **Correção de Recursão Infinita:** Bug crítico no `nvidia_kimi.py` corrigido.
+- **Failover Robusto:** Timeout curto (25s) para evitar travar o bot em APIs externas lentas.
+
+---
+
 ## [1.4.0] - 2026-02-15
 
 ### 🧠 HippocampAI (Versão Lite/KISS)

@@ -7,7 +7,8 @@ RUN apt-get update && \
       tesseract-ocr \
       tesseract-ocr-por \
       libmagic1 \
-      build-essential && \
+      build-essential \
+      git && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED=1 \
