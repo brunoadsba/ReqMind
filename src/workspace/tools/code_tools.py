@@ -3,25 +3,37 @@ import subprocess
 import os
 import logging
 
+from config.settings import config
+
 logger = logging.getLogger(__name__)
 
-async def search_code(query: str, path: str = "~/clawd", extensions: list = None) -> dict:
+async def search_code(query: str, path: str = None, extensions: list = None) -> dict:
     if extensions is None:
         extensions = [".py", ".js", ".ts", ".jsx", ".tsx"]
     
     try:
-        full_path = os.path.expanduser(path)
-        include_args = " ".join([f"--include='*{ext}'" for ext in extensions])
-        command = f"grep -rn '{query}' {full_path} {include_args}"
+        # Usa config.BASE_DIR como path padrão se não especificado
+        if path is None:
+            full_path = str(config.BASE_DIR)
+        else:
+            full_path = os.path.expanduser(path)
         
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+        # Constrói o comando grep com argumentos separados (sem shell=True)
+        cmd = ["grep", "-rn", query]
+        for ext in extensions:
+            cmd.extend(["--include", f"*{ext}"])
+        cmd.append(full_path)
+        
+        result = subprocess.run(cmd, shell=False, capture_output=True, text=True, timeout=10)
         
         return {"success": True, "results": result.stdout, "matches": len(result.stdout.split('\n')) if result.stdout else 0}
     except Exception as e:
         logger.error(f"Erro na busca: {e}")
         return {"success": False, "error": str(e)}
 
-async def git_status(repo_path: str = "~/clawd") -> dict:
+async def git_status(repo_path: str = None) -> dict:
+    if repo_path is None:
+        repo_path = str(config.BASE_DIR)
     try:
         full_path = os.path.expanduser(repo_path)
         result = subprocess.run(["git", "status"], cwd=full_path, capture_output=True, text=True, timeout=5)

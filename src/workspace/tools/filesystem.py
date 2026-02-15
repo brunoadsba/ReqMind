@@ -37,8 +37,24 @@ async def write_file(path: str, content: str) -> dict:
         logger.error(f"Erro ao escrever arquivo: {e}")
         return {"success": False, "error": str(e)}
 
+def _normalize_project_path(path: str) -> str:
+    """Se o usuário/LLM pedir 'diretório atual' ou '.', usa BASE_DIR do projeto."""
+    if not path or not (p := path.strip()):
+        return str(config.BASE_DIR)
+    p_lower = p.lower()
+    if p in (".", "current", "atual"):
+        return str(config.BASE_DIR)
+    if any(
+        x in p_lower
+        for x in ("diretório atual", "diretorio atual", "atual do projeto", "diretório do projeto")
+    ):
+        return str(config.BASE_DIR)
+    return path
+
+
 async def list_directory(path: str) -> dict:
     try:
+        path = _normalize_project_path(path)
         ok, resolved = validate_path(path, _allowed_bases())
         if not ok:
             return {"success": False, "error": resolved}
@@ -84,10 +100,10 @@ LIST_DIRECTORY_SCHEMA = {
     "type": "function",
     "function": {
         "name": "list_directory",
-        "description": "Lista arquivos e diretórios",
+        "description": "Lista arquivos e diretórios. Para 'diretório atual do projeto' use path '.' ou 'diretório atual do projeto' (lista a raiz do projeto).",
         "parameters": {
             "type": "object",
-            "properties": {"path": {"type": "string", "description": "Caminho do diretório"}},
+            "properties": {"path": {"type": "string", "description": "Caminho do diretório (use '.' para raiz do projeto)"}},
             "required": ["path"]
         }
     }

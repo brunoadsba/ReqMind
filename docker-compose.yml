@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  assistente-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: assistente-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./dados:/app/dados
+      - ./data:/app/data
+      - ./tmp:/app/tmp
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app/src
+    # Opcional: health check para monitorar se o bot está respondendo
+    # healthcheck:
+    #   test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+    #   interval: 1m
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

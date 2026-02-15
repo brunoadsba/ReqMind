@@ -100,9 +100,56 @@ Código em **`src/`**. Execução: `PYTHONPATH=src` na raiz.
 ### 2. Memória RAG e alimentação de normas (2026-02-05)
 **O quê:** Memória persistente em `src/dados/memory.json` (workspace.tools.impl.rag_memory). Em 429 (rate limit Groq), se Kimi (NVIDIA) não estiver disponível, o agente busca na memória por termos como "NR-29" ou "NR" e devolve trecho relevante (~1200 caracteres), truncando em fronteira de frase e adicionando "(Resumo truncado.)".
 
+### 3. Sistema Híbrido de Normas Regulamentadoras (NRs) (2026-02-06)
+**O quê:** O assistente possui um sistema híbrido para consulta às NRs de SST:
+
+- **NRs em memória** (instantâneo): NR-1, NR-5, NR-6, NR-10, NR-29, NR-35
+- **NRs via web** (busca automática): Todas as outras NRs (NR-2 a NR-4, NR-7 a NR-9, NR-11 a NR-28, NR-30 a NR-38)
+
+**Arquitetura:**
+```
+NRs Frequentes (memória) + NRs Específicas (web search)
+```
+
+**NRs Carregadas:**
+| NR | Tema | Tokens | Status |
+|----|------|--------|--------|
+| NR-1 | Disposições Gerais e Gerenciamento de Riscos | ~5K | ✅ Implementado |
+| NR-5 | CIPA | ~3K | ✅ Implementado |
+| NR-6 | EPI | ~4K | ✅ Implementado |
+| NR-10 | Eletricidade | ~8K | ✅ Implementado |
+| NR-29 | Trabalho Portuário | ~4K | ✅ Implementado |
+| NR-33 | Espaço Confinado | ~6K | ✅ Implementado |
+| NR-35 | Trabalho em Altura | ~5K | ✅ Implementado |
+
+**Total estimado:** ~35.000 tokens
+
 **Scripts de alimentação:**
 - `scripts/feed_nr29_to_memory.py` — injeta resumo estruturado da NR-29 na memória.
-- `scripts/feed_nr29_oficial.py` — lê `scripts/nr29_oficial_dou.txt`, divide por seções (29.1, 29.2, …) e injeta texto oficial. Uso: `PYTHONPATH=src python scripts/feed_nr29_oficial.py [caminho_opcional]`.
+- `scripts/feed_nr29_oficial.py` — injeta texto oficial DOU da NR-29.
+- `scripts/feed_nr01.py` — NR-1 - Disposições Gerais
+- `scripts/feed_nr05.py` — NR-5 - CIPA
+- `scripts/feed_nr06.py` — NR-6 - EPI
+- `scripts/feed_nr10.py` — NR-10 - Eletricidade
+- `scripts/feed_nr33.py` — NR-33 - Espaço Confinado
+- `scripts/feed_nr35.py` — NR-35 - Trabalho em Altura
+- `scripts/fetch_nr_govt.py` — Script genérico para download de NRs do site govt.br
+
+**Fluxo de consulta:**
+1. Usuário pergunta sobre NR
+2. Se NR está na memória → responde instantâneo
+3. Se NR não está na memória → web search automático no site do Ministério do Trabalho
+
+**Exemplo de uso:**
+```
+Usuário: "me explica a NR-35 trabalho em altura"
+→ Bot responde instantaneamente (NR-35 está na memória)
+
+Usuário: "o que diz a NR-18 construção civil"
+→ Bot faz web search e retorna resultado atualizado
+```
+
+**Plano de implementação:** Ver `PLANO_NRS_HIBRIDO.md`
 
 **Arquivo de memória:** `config.DATA_DIR` (ex.: `src/dados/`) + `memory.json`.
 
@@ -217,6 +264,11 @@ success = (result.returncode == 0 or
 1. **web_search** - DuckDuckGo
 2. **rag_search** - Busca na memória
 3. **save_memory** - Salva na memória
+
+### Normas Regulamentadoras (NRs)
+4. **nr_lookup** - Consulta NRs (sistema híbrido: memória + web search)
+   - NRs em memória: NR-1, NR-5, NR-6, NR-10, NR-29, NR-35
+   - NRs via web: Todas as outras (busca automática)
 
 ### Filesystem
 4. **read_file** - Lê arquivo
@@ -432,6 +484,8 @@ assistente/
 
 ### 1. Setup Inicial (15 min)
 
+**Pré-requisito:** Docker instalado. O bot é executado apenas via Docker.
+
 ```bash
 # Clone o projeto (exemplo usando ~/ReqMind)
 cd /home/brunoadsba/ReqMind
@@ -439,16 +493,14 @@ git clone https://github.com/brunoadsba/ReqMind.git .
 
 cd assistente
 
-# Crie ambiente virtual
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-
 # Configure .env
 cp .env.example .env
-vim .env  # Adicione suas API keys
+vim .env  # Adicione TELEGRAM_TOKEN, GROQ_API_KEY (e opcionalmente NVIDIA_API_KEY)
 chmod 600 .env
 
-# Teste (usando Python do venv e PYTHONPATH=src)
+# (Opcional) Ambiente virtual para testes locais
+python3 -m venv venv
+./venv/bin/pip install -r requirements.txt
 PYTHONPATH=src ./venv/bin/python -m pytest tests/ -v
 ```
 
@@ -462,37 +514,40 @@ Leia nesta ordem:
 ### 3. Primeiro Teste (10 min)
 
 ```bash
-# Execute localmente
-python bot_simple.py
+cd /home/brunoadsba/ReqMind/assistente
+make start-docker
 
 # No Telegram, envie:
 # "oi" → Deve responder
 # Envie uma foto → Deve analisar
+
+# Ver logs
+docker logs -f assistente-bot
 ```
 
 ### 4. Gerenciamento do Bot (15 min)
 
+O bot deve ser rodado **apenas com Docker**.
+
 ```bash
-# Iniciar bot (MÉTODO CORRETO - usa script seguro)
-cd /home/brunoadsba/clawd/moltbot-setup
-./scripts/start_bot_safe.sh
+cd /home/brunoadsba/ReqMind/assistente
+
+# Iniciar bot
+make start-docker
 
 # Verificar status
-./scripts/healthcheck.sh
+make status-docker
+
+# Ver logs em tempo real
+docker logs -f assistente-bot
 
 # Parar bot
-./scripts/stop_bot.sh
-
-# IMPORTANTE: NUNCA inicie bot manualmente (python bot_simple.py &)
-# Isso pode criar múltiplas instâncias e causar conflitos
-# SEMPRE use os scripts de gerenciamento
+make stop-docker
 ```
 
 **⚠️ AVISO CRÍTICO:**
-- Bot deve rodar apenas 1 instância por vez
-- Não use `python bot_simple.py &` manualmente
-- Não execute bot em background sem os scripts
-- Sempre use `./scripts/start_bot_safe.sh`
+- Bot deve rodar apenas 1 instância por vez (um único container ou processo com o mesmo token)
+- Use sempre `make start-docker` / `make stop-docker`; não inicie o bot manualmente sem Docker a não ser para debug
 
 ### 5. Adicione Sua Primeira Ferramenta (30 min)
 
@@ -520,18 +575,19 @@ PYTHONPATH=src python src/bot_simple.py  # Teste manual
 
 ### Deploy para Produção
 ```bash
-# 1. Parar bot (no diretório oficial)
 cd /home/brunoadsba/ReqMind/assistente
-make stop
 
-# 2. Garantir que dependências e .env estão atualizados
-make install
+# 1. Parar bot (se estiver rodando)
+make stop-docker
 
-# 3. Iniciar bot
-make start
+# 2. Garantir que .env está atualizado (o container usa --env-file .env)
+# Opcional: make install (para testes locais; o Docker faz build da imagem)
 
-# 4. Verificar logs (na raiz do projeto)
-tail -f bot.log
+# 3. Iniciar bot (build da imagem se necessário)
+make start-docker
+
+# 4. Verificar logs
+docker logs -f assistente-bot
 ```
 
 ---
@@ -540,31 +596,28 @@ tail -f bot.log
 
 ### Logs
 ```bash
-# Logs em tempo real
-tail -f /home/brunoadsba/clawd/moltbot-setup/bot.log
+# Logs em tempo real (bot rodando em Docker)
+docker logs -f assistente-bot
 
 # Buscar erros
-grep -i error bot.log
+docker logs assistente-bot 2>&1 | grep -i error
 
 # Buscar por user_id
-grep "user_id=6974901522" bot.log
+docker logs assistente-bot 2>&1 | grep "user_id=6974901522"
 ```
 
 ### Problemas Comuns
 
 **Bot não responde:**
-- Verifique se está rodando: `ps aux | grep bot_simple`
-- Veja logs: `tail -50 bot.log`
-- Verifique user_id em `security/auth.py`
-- Execute healthcheck: `./scripts/healthcheck.sh`
+- Verifique se o container está rodando: `make status-docker` ou `docker ps | grep assistente-bot`
+- Veja logs: `docker logs -f assistente-bot`
+- Verifique user_id em `security/auth.py` e variáveis em `.env`
 
 **Múltiplas instâncias (CONFLITO):**
 - Sintoma: Erro `Conflict: terminated by other getUpdates request`
 - Sintoma: Respostas demoram minutos
-- Solução: `./scripts/stop_bot.sh && ./scripts/start_bot_safe.sh`
-- Verifique: `./scripts/healthcheck.sh` (deve mostrar "1 instância")
-- Verifique se clawdbot-gateway está rodando: `systemctl --user status clawdbot-gateway`
-- Se necessário: `systemctl --user disable --now clawdbot-gateway`
+- Solução: `make stop-docker` e garantir que não há outro container ou processo com o mesmo token; depois `make start-docker`
+- Verifique: `docker ps` (deve haver no máximo um container `assistente-bot`)
 
 **Erro de API:**
 - Verifique .env: `cat .env | grep API_KEY`

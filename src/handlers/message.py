@@ -123,17 +123,21 @@ async def handle_message(
                     )
                 os.unlink(latest_image)
 
-        # Envia resposta em texto
-        await update.message.reply_text(response)
-
-        # Se solicitado, envia também em áudio
+        # Se pediu áudio, tenta TTS; em falha, acrescenta aviso na própria resposta (evita segunda mensagem)
+        audio_bytes = None
         if send_audio:
             await update.message.chat.send_action("record_voice")
             audio_bytes = text_to_speech(response)
-            if audio_bytes:
-                await update.message.reply_voice(voice=audio_bytes)
-            else:
-                await update.message.reply_text("⚠️ Não foi possível gerar o áudio.")
+            if not audio_bytes:
+                response = (
+                    response.rstrip()
+                    + "\n\n(Áudio indisponível. Configure ELEVENLABS_API_KEY para respostas em voz.)"
+                )
+
+        await update.message.reply_text(response)
+
+        if send_audio and audio_bytes:
+            await update.message.reply_voice(voice=audio_bytes)
 
     except Exception as e:
         logger.error(f"Erro: {e}", exc_info=True)

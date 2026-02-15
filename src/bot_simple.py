@@ -24,11 +24,11 @@ from telegram.ext import (
     ContextTypes,
 )
 from workspace.storage.sqlite_store import SQLiteStore
-from workspace.core.agent import Agent
 
 # Imports dos módulos criados
+from workspace.core.agent import Agent
 from agent_setup import create_agent_no_sandbox
-from commands import start, make_clear_handler, make_status_handler
+from commands import start, make_clear_handler, make_status_handler, lembretes_handler
 from handlers import (
     handle_message,
     handle_photo,
@@ -43,6 +43,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Diagnóstico: presença de chaves de fallback (não exibe valor)
+logger.info(
+    "Config: NVIDIA_KEY=%s GLM_KEY=%s",
+    "SET" if os.getenv("NVIDIA_API_KEY") else "MISSING",
+    "SET" if os.getenv("GLM_API_KEY") else "MISSING",
+)
+
 # Oculta logs de requisições HTTP (getUpdates, etc.)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("telegram").setLevel(logging.WARNING)
@@ -54,43 +61,55 @@ store = SQLiteStore()
 
 def make_message_handler(agent: Agent, store: SQLiteStore):
     """Factory para criar handler de mensagem com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_message(update, context, agent, store)
+
     return handler
 
 
 def make_photo_handler(store: SQLiteStore):
     """Factory para criar handler de foto com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_photo(update, context, store)
+
     return handler
 
 
 def make_video_handler(store: SQLiteStore):
     """Factory para criar handler de vídeo com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_video(update, context, store)
+
     return handler
 
 
 def make_voice_handler(agent: Agent, store: SQLiteStore):
     """Factory para criar handler de voz com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_voice(update, context, agent, store)
+
     return handler
 
 
 def make_audio_handler(agent: Agent, store: SQLiteStore):
     """Factory para criar handler de áudio com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_audio(update, context, agent, store)
+
     return handler
 
 
 def make_document_handler(agent: Agent, store: SQLiteStore):
     """Factory para criar handler de documento com dependências injetadas"""
+
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await handle_document(update, context, agent, store)
+
     return handler
 
 
@@ -110,19 +129,22 @@ async def main():
 
     # Configura handlers
     app = Application.builder().token(token).build()
-    
+
     # Comandos
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("clear", make_clear_handler(store)))
     app.add_handler(CommandHandler("status", make_status_handler(agent)))
-    
+    app.add_handler(CommandHandler("lembretes", lembretes_handler))
+
     # Handlers de mídia
     app.add_handler(MessageHandler(filters.PHOTO, make_photo_handler(store)))
     app.add_handler(MessageHandler(filters.VOICE, make_voice_handler(agent, store)))
     app.add_handler(MessageHandler(filters.AUDIO, make_audio_handler(agent, store)))
     app.add_handler(MessageHandler(filters.VIDEO, make_video_handler(store)))
     app.add_handler(MessageHandler(filters.Document.ALL, make_document_handler(agent, store)))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, make_message_handler(agent, store)))
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, make_message_handler(agent, store))
+    )
 
     # Inicializa e inicia o bot
     await app.initialize()

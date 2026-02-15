@@ -1,0 +1,254 @@
+# .cursorrules - ReqMind
+
+> **Versão:** 1.0  
+> **Propósito:** Alinhar o comportamento do Cursor AI às regras globais do ReqMind (Next.js 15, TypeScript strict, Tailwind, Supabase/Neon, Drizzle, Zod, T3 Env, Nuqs, OWASP Top 10).
+
+---
+
+## 📊 Informações do Projeto
+
+- **Stack principal:** Next.js 15 (App Router, Server Components por padrão)
+- **Linguagem:** TypeScript (Strict Mode)
+- **Estilização:** Tailwind CSS + Shadcn/ui
+- **Banco de Dados:** Supabase (PostgreSQL) ou Neon
+- **ORM:** Drizzle ORM
+- **Autenticação:** Supabase Auth ou Clerk
+- **Gerenciamento de Estado:** Nuqs (URL state) antes de `useState`
+
+---
+
+## 🎯 Regras de Performance e Contexto (`<context_management>`)
+
+### Limites de Contexto
+
+- **Prioridade de arquivos:**
+  1. Arquivo atual em edição.
+  2. Arquivos abertos recentemente (até 5).
+  3. Dependências diretas do arquivo atual (imports/exports).
+  4. Arquivos referenciados explicitamente via `@`.
+- **Foco em símbolos:** ao analisar arquivos, focar apenas nas funções, classes e componentes diretamente relevantes. Evitar carregar arquivos inteiros quando apenas um símbolo é necessário.
+- **Exclusões padrão:** ignorar por padrão arquivos de teste (`.test.`, `.spec.`), configuração (`.config.`, `.json`, `.yaml`) e documentação (`.md`), **a menos** que sejam mencionados explicitamente pelo usuário.
+- **Máximo de arquivos ativos:** manter no máximo **3 arquivos** no contexto simultaneamente para tarefas rotineiras. Expandir apenas quando explicitamente solicitado.
+
+### Orçamento de Resposta (`<response_budget>`)
+
+- **Respostas padrão (código/ajuste pontual):** até **800 tokens**.
+- **Debugging simples (fix + breve nota):** até **1200 tokens**.
+- **Análise/refatoração complexa:** até **2000 tokens**, somente quando o usuário pedir análise detalhada.
+
+---
+
+## 💻 Convenções de Código (`<coding_conventions>`)
+
+### Arquitetura e Estrutura
+
+- **Padrão de pastas do projeto:**
+  - `src/app/`: rotas e layouts do Next.js (App Router).
+  - `src/features/`: funcionalidades organizadas por feature.
+    - Cada feature pode conter: `components/`, `hooks/`, `actions.ts`, `.context.md`.
+  - `src/server/`: lógicas de negócio reutilizáveis.
+  - `src/lib/`: utilitários globais (`db.ts`, `env.ts`, `cn.ts` etc.).
+  - `src/components/`: componentes de UI globais.
+    - `src/components/ui/`: componentes Shadcn/ui reutilizáveis.
+
+### Padrões Obrigatórios
+
+- **Componentes React:**
+  - Server Components por padrão.
+  - Usar `"use client"` **apenas quando estritamente necessário** (interações no client, hooks de browser etc.).
+  - Componentes com no máximo **150 linhas**.
+- **Funções:**
+  - Funções com no máximo **30 linhas** de implementação.
+  - Complexidade ciclomática < 10 por função.
+- **Tipagem e props:**
+  - Props sempre tipadas, nunca usar `any`.
+  - Hooks customizados com prefixo `use`.
+- **Estado e hooks:**
+  - Preferir **Nuqs (URL state)** em vez de `useState` para estado que impacta URL/filters.
+  - `useState` apenas quando Nuqs não fizer sentido.
+- **Handlers:**
+  - Usar `useCallback` para handlers passados para componentes filhos.
+
+### Regras de Segurança e Validação (OWASP Top 10)
+
+- **Zod obrigatório para inputs:**
+  - Qualquer entrada de usuário (forms, query params, body de requisição) deve ser validada com **Zod** antes de qualquer processamento.
+- **T3 Env obrigatório para envs:**
+  - Nunca acessar `process.env` diretamente. Sempre usar T3 Env para validação e acesso a variáveis de ambiente.
+- **Server Actions e backend:**
+  - Mutação de dados sempre via **Server Actions** ou rotas de API, nunca em Client Components.
+  - Server Actions críticas (auth, billing, APIs públicas) devem ter **rate limiting**.
+- **Autenticação e autorização:**
+  - Lógica de autenticação isolada na feature `auth`.
+  - Sempre verificar permissões de usuário em Server Actions antes de acessar ou modificar dados.
+- **Tratamento de erros:**
+  - Padrão de retorno: `{ success: boolean, message?: string, data?: T }`.
+  - Não expor detalhes sensíveis de erros em respostas para o client.
+
+### Proibido
+
+- Prop drilling em mais de 2 níveis (usar contexto, hooks ou composição).
+- `console.log` em produção (usar logger estruturado).
+- Código comentado “morto” (remover ou documentar em `.context.md`).
+- Magic numbers (usar constantes nomeadas).
+- Armazenar dados sensíveis em client-side sem necessidade explícita.
+
+---
+
+## 🔧 Debugging e Resolução de Problemas (`<error_decision_framework>`)
+
+### Fluxo para Erros
+
+1. Identificar a causa raiz em no máximo 3 linhas de raciocínio interno.
+2. Propor o **fix direto no código**, sem explicação longa.
+3. Se envolver múltiplos arquivos, listar quais arquivos precisam ser alterados e em qual ordem.
+4. Não explicar sintaxe básica de TypeScript/Next.js/React.
+
+### Formato de Resposta para Erros
+
+```[linguagem]
+// apenas o código corrigido
+```
+
+[Opcional: nota de 1 linha sobre causa raiz ou comando de teste sugerido.]
+
+---
+
+## 📝 Estilo de Comunicação (`<response_guidelines>`)
+
+### Sempre
+
+- Priorizar **código primeiro**, explicação curta depois (se realmente necessária).
+- Respostas diretas e objetivas, sem preâmbulos desnecessários.
+- Quando fizer sentido, sugerir um **comando de teste rápido** (ex: `npm test`, `npx playwright test`, etc.).
+- Integrar o contexto anterior naturalmente, sem citar “memória” ou trechos de prompt.
+
+### Nunca
+
+- Não usar frases como: `"Claro!"`, `"Certamente!"`, `"Com prazer!"`.
+- Não explicar conceitos básicos (ex: “o que é um hook”, “o que é um componente React”).
+- Não oferecer múltiplas alternativas de solução, exceto quando o usuário pedir análise de trade-offs.
+- Não se desculpar por limitações do modelo.
+- Não usar tags XML ou similares, a menos que o usuário peça explicitamente.
+
+---
+
+## 🧠 Modo de Pensamento (`<thinking_budget>`)
+
+### Desativado (padrão, para eficiência)
+
+- Autocomplete.
+- Refatorações simples (renomear variável, extrair função pequena).
+- Geração de código boilerplate.
+- Correções de sintaxe.
+
+### Ativado (quando necessário ou solicitado)
+
+- Debugging de race conditions e memory leaks.
+- Refatorações arquiteturais relevantes (múltiplas features/arquivos).
+- Otimizações de performance complexas (análise de gargalos).
+- Decisões de design pattern ou mudanças estruturais importantes.
+
+---
+
+## 📚 Contexto de Negócio (`<business_context>`)
+
+[ADICIONE AQUI o contexto específico do ReqMind quando estiver definido.]
+
+Exemplo de estrutura:
+
+- Tipo de produto (ex: SaaS de produtividade / gestão de requisitos / etc.).
+- Perfil dos usuários principais.
+- Fluxos críticos (onboarding, criação/edição de entidades principais, relatórios).
+- Dados sensíveis e cuidados especiais (LGPD, segurança, privacidade).
+
+---
+
+## 🎨 Prompts por Cenário (otimizados)
+
+### 1. Autocomplete Rápido
+
+```
+Complete a implementação desta função seguindo as convenções do projeto (.cursorrules).
+Sem explicações, apenas código.
+```
+
+### 2. Debugging Eficiente
+
+```
+CONTEXTO: {{current_file}}
+ERRO: {{error_message}}
+
+Localize o erro e proponha fix imediato.
+Máximo 2 linhas de explicação da causa raiz.
+```
+
+### 3. Refatoração Simples (com limite de tamanho)
+
+```
+Refatore este componente para:
+- Manter no máximo 150 linhas.
+- Extrair lógica para hook customizado ou função pura quando fizer sentido.
+- Melhorar legibilidade sem mudar comportamento.
+
+Mostre apenas o código resultante.
+```
+
+### 4. Análise Complexa (ativar thinking)
+
+```
+Análise detalhada necessária:
+
+Problema: [descrição detalhada]
+Contexto: [múltiplos arquivos afetados]
+Restrições: [requisitos técnicos do ReqMind]
+
+Forneça:
+1. Análise da causa raiz.
+2. Múltiplas soluções com trade-offs.
+3. Recomendação final com justificativa.
+```
+
+### 5. Geração de Testes
+
+```
+Gere testes para {{function_or_component_name}}:
+- Cobrir casos felizes e edge cases.
+- Usar a stack do projeto (Vitest/Playwright quando aplicável).
+- Máximo 10 casos de teste.
+- Sem explicações, apenas código de teste.
+```
+
+### 6. Code Review Guiado
+
+```
+Review rápido de {{file_name}}:
+
+Checklist:
+- [ ] Segue convenções do projeto (.cursorrules).
+- [ ] Não há código duplicado (DRY).
+- [ ] Tratamento de erros adequado ({ success, message, data }).
+- [ ] Segurança (Zod, T3 Env, rate limiting quando aplicável).
+- [ ] Performance aceitável para Next.js (Server Components por padrão).
+
+Aponte apenas problemas reais e acionáveis, não preferências estéticas.
+Quando possível, sugira o patch de código completo.
+```
+
+---
+
+## 💡 Feedback Contínuo (`<feedback_loop>`)
+
+Quando o modelo gerar código que viole alguma regra importante deste arquivo:
+
+- Registrar na seção abaixo e ajustar as regras.
+- Usar estes itens como exemplos few-shot implícitos.
+
+```markdown
+## Correções Anteriores (Few-Shot Examples)
+- Nunca usar `var`, sempre `const` ou `let`.
+- Preferir `async/await` em vez de `.then()` para código assíncrono.
+- Priorizar Server Components; Client Components apenas quando necessário.
+- Sempre validar inputs de usuário com Zod antes de qualquer operação de banco.
+```
+

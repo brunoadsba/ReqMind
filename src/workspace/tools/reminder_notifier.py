@@ -23,7 +23,7 @@ class ReminderNotifier:
         self.smtp_port = int(os.getenv("SMTP_PORT", 587))
         self.password = os.getenv("SMTP_PASSWORD")
         self.telegram_token = os.getenv("TELEGRAM_TOKEN")
-        self.telegram_chat_id = 6974901522  # Seu user_id
+        self.telegram_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "6974901522"))
         # Storage persistente em config.DATA_DIR (config.REMINDERS_FILE)
         self.reminders_file = str(config.REMINDERS_FILE)
         self.tz = pytz.timezone("America/Sao_Paulo")
@@ -98,7 +98,9 @@ Enviado por Moltbot
 """
 
                     # Envia Telegram
-                    telegram_msg = f"🔔 **LEMBRETE**\n\n📝 {reminder['text']}\n🕐 {reminder['datetime']}"
+                    telegram_msg = (
+                        f"🔔 **LEMBRETE**\n\n📝 {reminder['text']}\n🕐 {reminder['datetime']}"
+                    )
 
                     email_sent = self.send_email(subject, body)
                     telegram_sent = await self.send_telegram(telegram_msg)
@@ -117,6 +119,38 @@ Enviado por Moltbot
 
         except Exception as e:
             logger.error(f"Erro ao verificar lembretes: {e}")
+
+    def list_pending_reminders(self) -> list:
+        """Retorna lista de lembretes pendentes ordenados por data/hora."""
+        try:
+            if not os.path.exists(self.reminders_file):
+                return []
+
+            with open(self.reminders_file, "r") as f:
+                reminders = json.load(f)
+
+            now = datetime.now(self.tz)
+            pending = []
+
+            for r in reminders:
+                try:
+                    reminder_time = datetime.fromisoformat(r["timestamp"])
+                    if reminder_time > now:
+                        pending.append(
+                            {
+                                "text": r.get("text", ""),
+                                "datetime": r.get("datetime", ""),
+                                "timestamp": r["timestamp"],
+                            }
+                        )
+                except (KeyError, ValueError):
+                    continue
+
+            pending.sort(key=lambda x: x["timestamp"])
+            return pending
+        except Exception as e:
+            logger.error(f"Erro ao listar lembretes: {e}")
+            return []
 
     async def start_monitoring(self):
         """Inicia monitoramento de lembretes"""

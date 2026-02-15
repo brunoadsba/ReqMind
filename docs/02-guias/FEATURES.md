@@ -17,32 +17,21 @@
 7. [Ferramentas de Desenvolvimento](#7-ferramentas-de-desenvolvimento)
 8. [Web Search](#8-web-search)
 9. [Memória Persistente (RAG)](#9-memória-persistente-rag)
-10. [Sistema de Lembretes](#10-sistema-de-lembretes)
-11. [Ferramentas Extras](#11-ferramentas-extras)
-12. [Segurança e Estabilidade (NOVO)](#12-segurança-e-estabilidade-novo)
-13. [Comandos do Bot](#13-comandos-do-bot)
-14. [Testes e Validação](#14-testes-e-validação)
-
-1. [Chat Inteligente](#1-chat-inteligente)
-2. [Análise de Imagens](#2-análise-de-imagens)
-3. [Análise de Vídeos](#3-análise-de-vídeos)
-4. [Transcrição de Áudio](#4-transcrição-de-áudio)
-5. [Text-to-Speech](#5-text-to-speech)
-6. [Análise de Documentos](#6-análise-de-documentos)
-7. [Ferramentas de Desenvolvimento](#7-ferramentas-de-desenvolvimento)
-8. [Web Search](#8-web-search)
-9. [Memória Persistente (RAG)](#9-memória-persistente-rag)
-10. [Sistema de Lembretes](#10-sistema-de-lembretes)
-11. [Ferramentas Extras](#11-ferramentas-extras)
-12. [Segurança e Estabilidade (NOVO)](#12-segurança-e-estabilidade-novo)
-13. [Comandos do Bot](#13-comandos-do-bot)
+10. [Sistema Híbrido de NRs](#10-sistema-híbrido-de-nrs) **NOVO**
+11. [Sistema de Lembretes](#10-sistema-de-lembretes)
+12. [Ferramentas Extras](#11-ferramentas-extras)
+13. [Segurança e Estabilidade (NOVO)](#12-segurança-e-estabilidade-novo)
+14. [Comandos do Bot](#13-comandos-do-bot)
+15. [Testes e Validação](#14-testes-e-validação)
 
 ---
 
 ## 1. Chat Inteligente
 
 ### Descrição
-Conversação natural com IA usando Groq Llama 3.3 70B, com capacidade de usar ferramentas automaticamente. Quando o Groq retorna limite de uso (429), o bot tenta **Kimi K2.5** via API NVIDIA (requer `NVIDIA_API_KEY` no `.env`); se não houver chave ou o Kimi falhar, responde a partir da **memória RAG** (ex.: NR-29), com truncamento em fronteira de frase e aviso "(Resumo truncado.)". Perguntas que pedem apenas data/hora são respondidas direto, sem chamar o agente.
+Conversação natural com IA usando Groq Llama 3.3 70B, com capacidade de usar ferramentas automaticamente. Quando o Groq retorna limite de uso (429), o bot tenta **Kimi K2.5** via API NVIDIA (requer `NVIDIA_API_KEY` no `.env`); se não houver chave ou o Kimi falhar, responde a partir da **memória RAG** (ex.: NRs), com truncamento em fronteira de frase e aviso "(Resumo truncado.)". Perguntas que pedem apenas data/hora são respondidas direto, sem chamar o agente.
+
+**Sistema Híbrido de NRs:** O bot possui 6 NRs em memória (NR-1, NR-5, NR-6, NR-10, NR-29, NR-35) para respostas instantâneas. Outras NRs são consultadas automaticamente via web search no site do Ministério do Trabalho.
 
 ### Como Usar
 Simplesmente envie uma mensagem de texto no Telegram.
@@ -75,7 +64,8 @@ Bot: [usa tool: web_search("Python 3.12")]
 - ✅ Raciocínio complexo
 - ✅ Múltiplas iterações (até 5)
 - ✅ Fallback para Kimi K2.5 (NVIDIA) quando Groq retorna 429 (timeout 20 s)
-- ✅ Fallback RAG em 429: se Kimi indisponível, resposta a partir da memória (ex.: NR-29), truncada em fronteira de frase com "(Resumo truncado.)"
+- ✅ Fallback RAG em 429: se Kimi indisponível, resposta a partir da memória (NRs), truncada em fronteira de frase com "(Resumo truncado.)"
+- ✅ Sistema Híbrido NRs: 6 NRs em memória (NR-1, NR-5, NR-6, NR-10, NR-29, NR-35), outras via web search automático
 - ✅ Resposta direta para perguntas só de data/hora (sem agente)
 - ✅ Mensagem de rate limit com tempo estimado (ex.: "em cerca de 6 minutos") quando não há resultado RAG
 - ✅ Sanitização de tool call em texto: se o modelo devolver markup de chamada (ex.: save_memory) no conteúdo, o agent remove e executa a ferramenta, evitando vazamento de tokens ao usuário
@@ -649,25 +639,139 @@ Bot: [busca na memória]
 - ✅ Memória persistente entre sessões
 - ✅ Contexto de longo prazo
 
-### 9.3 Alimentação de normas (ex.: NR-29)
+### 9.3 Sistema Híbrido de Normas Regulamentadoras (NRs)
 
-A memória RAG pode ser alimentada com textos longos (ex.: resumo ou texto oficial da NR-29) para que o bot responda mesmo quando a API está em rate limit (429).
+A memória RAG pode ser alimentada com textos longos (ex.: NRs de SST) para que o bot responda mesmo quando a API está em rate limit (429). O sistema usa uma abordagem híbrida:
 
-**Scripts**
+#### NRs em memória (instantâneo)
+| NR | Tema | Tokens | Status |
+|----|------|--------|--------|
+| NR-1 | Disposições Gerais e Gerenciamento de Riscos | ~5K | A fazer |
+| NR-5 | CIPA | ~3K | A fazer |
+| NR-6 | EPI | ~4K | A fazer |
+| NR-10 | Eletricidade | ~8K | A fazer |
+| NR-29 | Trabalho Portuário | ~4K | ✅ Implementado |
+| NR-35 | Trabalho em Altura | ~5K | A fazer |
+
+**Total:** ~29.000 tokens
+
+#### NRs via web (busca automática)
+NR-2 a NR-4, NR-7 a NR-9, NR-11 a NR-28, NR-30 a NR-38 são consultadas automaticamente via web search no site do Ministério do Trabalho quando o usuário pergunta.
+
+#### Scripts de alimentação
 - `scripts/feed_nr29_to_memory.py` — injeta resumo estruturado da NR-29 na memória.
-- `scripts/feed_nr29_oficial.py` — lê `scripts/nr29_oficial_dou.txt`, divide por seções (29.1, 29.2, …) e injeta o texto oficial na memória.
+- `scripts/feed_nr29_oficial.py` — injeta texto oficial DOU da NR-29.
+- `scripts/feed_nr05.py` — (a fazer) NR-5 - CIPA
+- `scripts/feed_nr06.py` — (a fazer) NR-6 - EPI
+- `scripts/feed_nr10.py` — (a fazer) NR-10 - Eletricidade
+- `scripts/feed_nr35.py` — (a fazer) NR-35 - Trabalho em Altura
+- `scripts/fetch_nr_govt.py` — (a fazer) Script genérico para download de NRs
 
-**Uso**
-```bash
-PYTHONPATH=src python scripts/feed_nr29_to_memory.py
-PYTHONPATH=src python scripts/feed_nr29_oficial.py [caminho_opcional.txt]
+#### Como usar
+```
+Usuário: "me explica a NR-35 trabalho em altura"
+→ Bot responde instantaneamente (NR-35 está na memória)
+
+Usuário: "o que diz a NR-18 construção civil"
+→ Bot faz web search e retorna resultado atualizado
 ```
 
-**Fallback em 429:** Se a API Groq retornar 429 e o Kimi (NVIDIA) não estiver disponível, o agente busca na memória por termos como "NR-29" ou "NR" e devolve o trecho encontrado (até ~1200 caracteres), truncando em fronteira de frase e adicionando "(Resumo truncado.)".
+#### Fallback em 429
+Se a API Groq retornar 429 e o Kimi (NVIDIA) não estiver disponível:
+1. Se a pergunta mencionar NR → busca na memória RAG
+2. Se NR está na memória → retorna trecho relevante (~1200 caracteres)
+3. Se NR não está na memória → faz web search automaticamente
+
+**Plano de implementação:** Ver `PLANO_NRS_HIBRIDO.md`
 
 ---
 
-## 10. Sistema de Lembretes
+## 10. Sistema Híbrido de Normas Regulamentadoras (NRs)
+
+### Descrição
+Sistema híbrido para consulta às Normas Regulamentadoras de Segurança e Saúde no Trabalho (SST):
+- **NRs em memória:** 6 NRs carregadas proativamente para respostas instantâneas
+- **NRs via web:** Busca automática no site do Ministério do Trabalho para NRs não carregadas
+
+### NRs em memória (instantâneo)
+
+| NR | Tema | Tokens | Status |
+|----|------|--------|--------|
+| NR-1 | Disposições Gerais e Gerenciamento de Riscos | ~5K | A fazer |
+| NR-5 | CIPA | ~3K | A fazer |
+| NR-6 | EPI | ~4K | A fazer |
+| NR-10 | Eletricidade | ~8K | A fazer |
+| NR-29 | Trabalho Portuário | ~4K | ✅ Implementado |
+| NR-35 | Trabalho em Altura | ~5K | A fazer |
+
+**Total:** ~29.000 tokens
+
+ web (busca### NRs via automática)
+- NR-2 a NR-4, NR-7 a NR-9, NR-11 a NR-28, NR-30 a NR-38
+- Busca automática no site: https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/seguranca-e-saude-no-trabalho
+
+### Como usar
+
+**NR em memória:**
+```
+Usuário: "me explica a NR-35 trabalho em altura"
+Bot: [responde instantaneamente]
+```
+
+**NR via web:**
+```
+Usuário: "o que diz a NR-18 construção civil"
+Bot: [faz web search e retorna resultado atualizado]
+```
+
+**Consulta específica:**
+```
+Usuário: "quais são os EPIs obrigatórios segundo NR-6"
+Bot: [busca na NR-6 e retorna seção relevante]
+```
+
+### Arquitetura
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    MEMÓRIA RAG                          │
+│  NRs mais usadas: NR-1, NR-5, NR-6, NR-10, NR-29, NR-35│
+│  (~29.000 tokens total)                                │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+              Pergunta sobre NR específica?
+                          ↓
+         ┌─────────────────┴─────────────────┐
+         ↓                                   ↓
+    [NR na memória?]                   [NR NÃO está na memória?]
+         ↓                                   ↓
+    Responde direto                   Web search + consulta
+    (instantâneo)                     (2-3s, sempre atual)
+```
+
+### Scripts de alimentação
+
+```bash
+PYTHONPATH=src python scripts/feed_nr29_to_memory.py  # NR-29 (ok)
+PYTHONPATH=src python scripts/feed_nr05.py  # NR-5 (a fazer)
+PYTHONPATH=src python scripts/feed_nr06.py  # NR-6 (a fazer)
+PYTHONPATH=src python scripts/feed_nr10.py  # NR-10 (a fazer)
+PYTHONPATH=src python scripts/feed_nr35.py  # NR-35 (a fazer)
+```
+
+### Fallback em 429
+
+Quando a API Groq retorna 429:
+1. Se a pergunta mencionar NR e a NR estiver na memória → retorna conteúdo
+2. Se a NR não estiver na memória → faz web search automaticamente
+
+### Para desenvolvedores
+
+Ver `PLANO_NRS_HIBRIDO.md` para detalhes da implementação.
+
+---
+
+## 11. Sistema de Lembretes
 
 ### Descrição
 Cria lembretes que são enviados por Email e Telegram no horário especificado.
@@ -721,7 +825,7 @@ Corpo: Este é seu lembrete agendado:
 
 ---
 
-## 11. Ferramentas Extras
+## 12. Ferramentas Extras
 
 ### 11.1 Clima
 
@@ -827,7 +931,7 @@ Bot: [usa tool: generate_image("gato astronauta")]
 
 ---
 
-## 12. Segurança e Estabilidade (NOVO)
+## 13. Segurança e Estabilidade (NOVO)
 
 ### 12.1 SecureFileManager
 
@@ -1009,7 +1113,7 @@ Sistema de lembretes modernizado para melhor estabilidade.
 
 ---
 
-## 13. Comandos do Bot
+## 14. Comandos do Bot
 
 ### /start
 Inicia o bot e mostra mensagem de boas-vindas.
@@ -1097,7 +1201,7 @@ Ferramentas disponíveis: 14
 
 ---
 
-## 14. Testes e Validação
+## 15. Testes e Validação
 
 ### Status de Testes (2026-01-31)
 

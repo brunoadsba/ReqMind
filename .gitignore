@@ -62,6 +62,7 @@ dmypy.json
 
 # Logs e dados locais
 *.log
+result.json
 bot.log
 logs/
 data/

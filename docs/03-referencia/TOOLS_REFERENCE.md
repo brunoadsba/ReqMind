@@ -1,14 +1,15 @@
 # 🛠️ Tools Reference - Assistente Digital
 
-Referência completa de todas as 14 ferramentas disponíveis no Assistente Digital.
+Referência completa de todas as ferramentas disponíveis no Assistente Digital.
 
 ## Índice
 
 1. [Web & Search](#web--search)
-2. [Memória (RAG)](#memória-rag)
-3. [Filesystem](#filesystem)
-4. [Code & Git](#code--git)
-5. [Extras](#extras)
+2. [Normas Regulamentadoras (NR)](#normas-regulamentadoras-nr)
+3. [Memória (RAG)](#memória-rag)
+4. [Filesystem](#filesystem)
+5. [Code & Git](#code--git)
+6. [Extras](#extras)
 
 ---
 
@@ -43,9 +44,65 @@ result = await web_search("Python 3.12 features", max_results=3)
 
 ---
 
+## Normas Regulamentadoras (NR)
+
+O Assistente Digital possui um **sistema híbrido** para consulta às Normas Regulamentadoras de SST:
+
+- **NRs em memória** (instantâneo): NR-1, NR-5, NR-6, NR-10, NR-29, NR-35
+- **NRs via web** (busca automática): Todas as outras NRs (NR-2 a NR-4, NR-7 a NR-9, NR-11 a NR-28, NR-30 a NR-38)
+
+### Sistema Híbrido
+
+O agente detecta automaticamente perguntas sobre NRs e:
+1. Se a NR estiver na memória → responde instantaneamente
+2. Se a NR não estiver na memória → faz web search no site do Ministério do Trabalho
+
+### Exemplo de Uso
+
+```
+Usuário: "me explica a NR-35 trabalho em altura"
+→ Bot responde instantaneamente (NR-35 está na memória)
+
+Usuário: "o que diz a NR-18 construção civil"
+→ Bot faz web search e retorna resultado atualizado
+```
+
+### NRs Disponíveis em Memória
+
+| NR | Tema | Tokens |
+|----|------|--------|
+| NR-1 | Disposições Gerais e Gerenciamento de Riscos | ~5K |
+| NR-5 | CIPA | ~3K |
+| NR-6 | EPI | ~4K |
+| NR-10 | Eletricidade | ~8K |
+| NR-29 | Trabalho Portuário | ~4K |
+| NR-35 | Trabalho em Altura | ~5K |
+
+**Total:** ~29.000 tokens
+
+### Scripts de Alimentação
+
+Para adicionar novas NRs à memória:
+```bash
+PYTHONPATH=src python scripts/feed_nr05.py  # NR-5
+PYTHONPATH=src python scripts/feed_nr06.py  # NR-6
+PYTHONPATH=src python scripts/feed_nr10.py  # NR-10
+PYTHONPATH=src python scripts/feed_nr35.py  # NR-35
+```
+
+### nr_lookup (futuro)
+
+Ferramenta dedicada para consultas NR:
+```python
+# Ainda em implementação
+result = await nr_lookup(nr_number=35, query="cinto de segurança")
+```
+
+---
+
 ## Memória (RAG)
 
-A memória fica em `src/dados/memory.json` (config.DATA_DIR). Pode ser alimentada por scripts (ex.: `scripts/feed_nr29_to_memory.py`, `scripts/feed_nr29_oficial.py`). Em rate limit (429) da API, o agente usa esta memória para responder quando a pergunta menciona NR/normas.
+A memória fica em `src/dados/memory.json` (config.DATA_DIR). Pode ser alimentada por scripts (ex.: `scripts/feed_nr29_to_memory.py`, `scripts/feed_nr29_oficial.py`, `scripts/feed_nr05.py`, etc.). Em rate limit (429) da API, o agente usa esta memória para responder quando a pergunta menciona NR/normas.
 
 ### rag_search
 

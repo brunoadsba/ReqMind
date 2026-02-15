@@ -1,6 +1,7 @@
 """Cliente para Kimi K2.5 via NVIDIA NIM API (chat completions)."""
 
 import logging
+import time
 from typing import List, Dict, Optional
 
 import requests
@@ -11,6 +12,32 @@ NVIDIA_CHAT_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 KIMI_MODEL = "moonshotai/kimi-k2.5"
 # Timeout curto para fallback em 429: evita usuário esperar 1 min se a API estiver lenta
 DEFAULT_TIMEOUT = 20
+MAX_RETRIES = 2
+
+
+def _make_request_with_retry(
+    api_key: str,
+    messages: List[Dict[str, str]],
+    max_tokens: int,
+    temperature: float,
+    thinking: bool,
+    timeout: float,
+) -> Optional[str]:
+    """Faz a requisição com retry e backoff exponencial."""
+    headers = {
+        "Authorization": f"Bearer {api_key.strip()}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": KIMI_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "stream": False,
+        "chat_template_kwargs": {"thinking": thinking},
+    }
+
+    return _make_request_with_retry(api_key, messages, max_tokens, temperature, thinking, timeout)
 
 
 def chat_completion_sync(
@@ -25,45 +52,17 @@ def chat_completion_sync(
     Chamada síncrona à API NVIDIA para Kimi K2.5.
     Retorna o conteúdo da resposta ou None em caso de erro.
     Não suporta tool calling; uso típico como fallback quando Groq retorna 429.
+    Implementa retry com backoff exponencial para resiliência.
     """
     if not api_key or not api_key.strip():
         logger.warning("NVIDIA_API_KEY não configurada")
         return None
 
-    headers = {
-        "Authorization": f"Bearer {api_key.strip()}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": KIMI_MODEL,
-        "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "stream": False,
-        "chat_template_kwargs": {"thinking": thinking},
-    }
-
-    try:
-        resp = requests.post(
-            NVIDIA_CHAT_URL,
-            headers=headers,
-            json=payload,
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        choices = data.get("choices") or []
-        if not choices:
-            logger.warning("Resposta NVIDIA sem choices")
-            return None
-        content = (choices[0].get("message") or {}).get("content")
-        return (content or "").strip() or None
-    except requests.exceptions.Timeout:
-        logger.warning("Timeout na API NVIDIA Kimi")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.warning("Erro na API NVIDIA Kimi: %s", e)
-        return None
-    except (KeyError, TypeError, ValueError) as e:
-        logger.warning("Resposta NVIDIA inesperada: %s", e)
-        return None
+    return _make_request_with_retry(
+        api_key=api_key,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        thinking=thinking,
+        timeout=timeout,
+    )

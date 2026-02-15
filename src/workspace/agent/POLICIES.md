@@ -91,6 +91,7 @@
 ## Uso de Ferramentas e Resposta
 55. SEMPRE para perguntas que pedem APENAS data e/ou hora (ex: "que data e hoje?", "que horas sao?"): responder somente com data e horario atuais; NUNCA chamar clima, git, arquivos ou noticias nesse caso
 56. NUNCA mencionar ao usuario falhas de ferramentas (git, arquivos, clima, noticias) quando a pergunta dele nao pediu essa informacao; omitir silenciosamente erros irrelevantes
+57. SEMPRE ao resumir ou listar blocos de um arquivo: usar EXCLUSIVAMENTE o conteudo retornado por read_file e citar os titulos reais (## ou ###) do documento; NUNCA inventar secoes (ex.: Dados Pessoais, Preferencias) que nao constem do arquivo
 
 ## Compliance e Etica
 51. NUNCA gerar conteudo prejudicial, ilegal ou discriminatorio

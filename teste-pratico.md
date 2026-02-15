@@ -2,6 +2,8 @@
 
 Guia de prompts para validar, na prática, as principais capacidades do Assistente Digital de Bruno.
 
+**Aviso:** Executar muitos prompts em sequência pode atingir o limite da API Groq. Recomenda-se testar em blocos (ex.: seções 1–3, depois 4–5) com pausa de 1–2 minutos entre blocos, ou em sessões separadas.
+
 ---
 
 ## 1. 💬 Chat inteligente e respostas em áudio

@@ -1,7 +1,7 @@
 # Makefile - alvos padrão para desenvolvimento
 # Uso: make install, make test, make lint
 
-.PHONY: install test test-all test-sync lint clean help start stop status instancias start-docker stop-docker status-docker
+.PHONY: install test test-all test-sync lint clean help start stop status instancias start-docker stop-docker status-docker health
 
 help:
 	@echo "Comandos disponíveis:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make stop      - Encerra o bot Telegram (scripts/stop.sh)"
 	@echo "  make status    - Verifica se o bot está rodando"
 	@echo "  make instancias - Lista todas as instâncias do bot (pgrep -af bot_simple)"
+	@echo "  make health    - Health check (container, .env, agente/tools)"
 	@echo "  make test     - Suíte estável (SQLite + segurança; recomendado)"
 	@echo "  make test-all - Todos os testes (pode segfault/erro ctypes no Python do sistema; use venv)"
 	@echo "  make test-sync - Alias para make test"
@@ -38,6 +39,7 @@ install:
 # Suíte estável: evita segfault (logging/asyncio) e ctypes (pandas) em alguns ambientes
 test test-sync:
 	PYTHONPATH=src python -m pytest \
+		tests/test_fixes_bot.py \
 		tests/test_e2e_simple.py::test_sqlite_store \
 		tests/test_security.py::test_sanitize_youtube_url_valid \
 		tests/test_security.py::test_sanitize_youtube_url_invalid \
@@ -75,3 +77,6 @@ stop-docker:
 
 status-docker:
 	@docker ps --filter "name=assistente-bot" --format "table {{.Names}}\t{{.Status}}" || true
+
+health:
+	PYTHONPATH=src python scripts/health_check.py

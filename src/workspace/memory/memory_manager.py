@@ -126,19 +126,47 @@ class MemoryManager:
         """Busca fatos relevantes"""
         results = self.fact_store.search_facts(query, top_k=top_k)
         return [(fact.content, score) for fact, score in results]
-    
+
+    @staticmethod
+    def _is_about_me_query(msg: str) -> bool:
+        """True se a mensagem pergunta sobre o usuário / preferências / o que o bot sabe sobre mim."""
+        if not (msg or msg.strip()):
+            return False
+        lower = msg.strip().lower()
+        triggers = (
+            "sabe sobre mim",
+            "sabe de mim",
+            "informações sobre mim",
+            "informacoes sobre mim",
+            "o que tem salvo",
+            "minhas preferências",
+            "minhas preferencias",
+            "o que você sabe sobre mim",
+            "o que voce sabe sobre mim",
+        )
+        return any(t in lower for t in triggers)
+
     def get_relevant_memory(self, user_message: str, max_facts: int = 3) -> str:
-        """Retorna fatos relevantes como contexto para o agente"""
+        """Retorna fatos relevantes como contexto para o agente."""
         results = self.search(user_message, top_k=max_facts)
-        
+
+        # Fallback: perguntas "sobre mim" podem não dar match na busca; usa query genérica de usuário
+        if not results and self._is_about_me_query(user_message):
+            fallback_query = "usuário Bruno preferências contexto do usuário do bot"
+            results = self.search(fallback_query, top_k=max_facts)
+        if not results and self._is_about_me_query(user_message):
+            # Último recurso: fatos recentes (podem ser sobre o usuário)
+            recent = self.fact_store.get_recent_facts(limit=max_facts)
+            results = [(f.content, 0.5) for f in recent]
+
         if not results:
             return ""
-        
+
         memory_context = "Fatos relevantes:\n"
         for content, score in results:
-            if score > 0.1:  # Threshold de relevancia
+            if score > 0.1:
                 memory_context += f"- {content}\n"
-        
+
         return memory_context if len(memory_context) > 20 else ""
     
     def remember_interaction(self, user_message: str, assistant_response: str):
